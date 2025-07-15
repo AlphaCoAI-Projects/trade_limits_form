@@ -1,0 +1,218 @@
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
+
+interface FormData {
+  upper_limit: string
+  lower_limit: string
+  super_upper_limit: string
+  super_lower_limit: string
+  lower_band: string
+  median_band: string
+  upper_band: string
+}
+
+interface PatData {
+  upper_limit?: number
+  lower_limit?: number
+  super_upper_limit?: number
+  super_lower_limit?: number
+  lower_band?: number
+  median_band?: number
+  upper_band?: number
+}
+
+interface Company {
+  alpha_code: string
+  companyname: string
+}
+
+const EMPTY_FORM: FormData = {
+  upper_limit: "",
+  lower_limit: "",
+  super_upper_limit: "",
+  super_lower_limit: "",
+  lower_band: "",
+  median_band: "",
+  upper_band: "",
+}
+
+export const useLineItemsForm = (selectedCompany: Company | null) => {
+  const [formData, setFormData] = useState<FormData>(EMPTY_FORM)
+  const [existingLineItems, setExistingLineItems] = useState<PatData | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [hasHydrated, setHasHydrated] = useState(false)
+  const [lastSavedFormData, setLastSavedFormData] = useState<FormData>(formData)
+  const [isAutoSaving, setIsAutoSaving] = useState(false)
+  const [autoSaveCountdown, setAutoSaveCountdown] = useState<number | null>(
+    null
+  )
+  const [saveSuccess, setSaveSuccess] = useState(false)
+
+  useEffect(() => {
+    if (!selectedCompany) return
+
+    const fetchExisting = async () => {
+        setHasHydrated(false)
+        setLoading(true)
+        setExistingLineItems(null)
+      
+        try {
+          const res = await fetch(`/api/entries?q=${selectedCompany.alpha_code}`)
+          const resData = await res.json()
+          const data= resData.data
+      
+          if (!data) {
+            toast.info("No data found for this company")
+            setFormData(EMPTY_FORM)
+            setHasHydrated(true)
+            return
+          }
+      
+          const hydrated: FormData = {
+            upper_limit: data.upper_limit?.toString() || "",
+            lower_limit: data.lower_limit?.toString() || "",
+            super_upper_limit: data.super_upper_limit?.toString() || "",
+            super_lower_limit: data.super_lower_limit?.toString() || "",
+            lower_band: data.lower_band?.toString() || "",
+            median_band: data.median_band?.toString() || "",
+            upper_band: data.upper_band?.toString() || "",
+          }
+      
+          setExistingLineItems(data)
+          setFormData(hydrated)
+          setLastSavedFormData(hydrated)
+          setHasHydrated(true)
+      
+          toast.success("Loaded PAT data")
+        } catch {
+          toast.info("Error loading PAT data")
+        } finally {
+          setLoading(false)
+        }
+      }
+      
+
+    fetchExisting()
+  }, [selectedCompany])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const autoSave = async () => {
+    if (!selectedCompany || !hasHydrated) return
+    setIsAutoSaving(true)
+
+    const toNullableFloat = (val: string) =>
+      val.trim() === "" ? null : parseFloat(val)
+
+    try {
+      const res = await fetch(`/api/entries/${selectedCompany.alpha_code}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          alpha_code: selectedCompany.alpha_code,
+          upper_limit: toNullableFloat(formData.upper_limit),
+          lower_limit: toNullableFloat(formData.lower_limit),
+          super_upper_limit: toNullableFloat(formData.super_upper_limit),
+          super_lower_limit: toNullableFloat(formData.super_lower_limit),
+          lower_band: toNullableFloat(formData.lower_band),
+          median_band: toNullableFloat(formData.median_band),
+          upper_band: toNullableFloat(formData.upper_band),
+        }),
+      })
+
+      if (!res.ok) throw new Error()
+      setLastSavedFormData(formData)
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch (e) {
+      console.error("Autosave failed", e)
+    } finally {
+      setIsAutoSaving(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedCompany || !hasHydrated) return
+
+    if (JSON.stringify(formData) === JSON.stringify(lastSavedFormData)) {
+      setAutoSaveCountdown(null)
+      return
+    }
+
+    setAutoSaveCountdown(5)
+    const countdown = setInterval(() => {
+      setAutoSaveCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(countdown)
+          autoSave()
+          return null
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(countdown)
+  }, [formData, hasHydrated])
+
+  const handleSubmit = async () => {
+    if (!selectedCompany) {
+      toast.error("Please select a company")
+      return
+    }
+
+    setLoading(true)
+
+    const toNullableFloat = (val: string) =>
+      val.trim() === "" ? null : parseFloat(val)
+
+    try {
+      const res = await fetch(`/api/entries/${selectedCompany.alpha_code}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          alpha_code: selectedCompany.alpha_code,
+          upper_limit: toNullableFloat(formData.upper_limit),
+          lower_limit: toNullableFloat(formData.lower_limit),
+          super_upper_limit: toNullableFloat(formData.super_upper_limit),
+          super_lower_limit: toNullableFloat(formData.super_lower_limit),
+          lower_band: toNullableFloat(formData.lower_band),
+          median_band: toNullableFloat(formData.median_band),
+          upper_band: toNullableFloat(formData.upper_band),
+        }),
+      })
+
+      if (!res.ok) throw new Error()
+      const result = await res.json()
+
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+
+      toast.success(result.message || "PAT data updated successfully")
+    } catch {
+      toast.error("Failed to submit PAT data")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resetForm = () => {
+    setFormData(EMPTY_FORM)
+    setExistingLineItems(null)
+  }
+
+  return {
+    formData,
+    handleChange,
+    handleSubmit,
+    loading,
+    resetForm,
+    disabled: loading,
+    existingLineItems,
+    autoSaveCountdown,
+    isAutoSaving,
+    saveSuccess,
+  }
+}
