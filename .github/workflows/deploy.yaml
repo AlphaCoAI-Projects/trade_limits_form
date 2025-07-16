@@ -1,0 +1,38 @@
+name: Deploy Limits Form to S3 (OIDC)
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-to-s3:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install dependencies and build site
+        run: |
+          npm install
+          npm run build
+
+      - name: Delete existing S3 bucket contents
+        run: |
+          aws s3 rm s3://${{ secrets.S3_BUCKET_NAME }} --recursive
+
+      - name: Upload build files to S3
+        run: |
+          aws s3 cp dist/ s3://${{ secrets.S3_BUCKET_NAME }}/ --recursive
