@@ -26,6 +26,20 @@ interface Company {
   companyname: string
 }
 
+export interface SplitsVolatilityData {
+  splits: {
+    sales?: number[]
+    operating_profit?: number[]
+    net_profit?: number[]
+  }
+  volatility: {
+    sales?: number
+    operating_profit?: number
+    adjusted_pbt?: number
+    adjusted_pat?: number
+  }
+}
+
 const EMPTY_FORM: FormData = {
   upper_limit: "",
   lower_limit: "",
@@ -47,27 +61,31 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
     null
   )
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [splitsVolatility, setSplitsVolatility] = useState<SplitsVolatilityData | null>(null)
+  
 
   useEffect(() => {
     if (!selectedCompany) return
 
-    const fetchExisting = async () => {
-        setHasHydrated(false)
-        setLoading(true)
-        setExistingLineItems(null)
-      
-        try {
-          const res = await fetch(`/api/entries?q=${selectedCompany.alpha_code}`)
-          const resData = await res.json()
-          const data= resData.data
-      
-          if (!data) {
-            toast.info("No data found for this company")
-            setFormData(EMPTY_FORM)
-            setHasHydrated(true)
-            return
-          }
-      
+    const fetchData = async () => {
+      setHasHydrated(false)
+      setLoading(true)
+      setExistingLineItems(null)
+      setSplitsVolatility(null)
+
+      try {
+        const [patRes, svRes] = await Promise.all([
+          fetch(`/api/entries?q=${selectedCompany.alpha_code}`),
+          fetch(`/api/splits-volatility?alpha_code=${selectedCompany.alpha_code}`)
+        ])
+
+        const patData = await patRes.json()
+        const svData = await svRes.json()
+
+        // hydrate PAT form
+        if (patData?.data) {
+          const data = patData.data
+
           const hydrated: FormData = {
             upper_limit: data.upper_limit?.toString() || "",
             lower_limit: data.lower_limit?.toString() || "",
@@ -77,22 +95,30 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
             median_band: data.median_band?.toString() || "",
             upper_band: data.upper_band?.toString() || "",
           }
-      
+
           setExistingLineItems(data)
           setFormData(hydrated)
           setLastSavedFormData(hydrated)
-          setHasHydrated(true)
-      
-          toast.success("Loaded PAT data")
-        } catch {
-          toast.info("Error loading PAT data")
-        } finally {
-          setLoading(false)
+        } else {
+          toast.info("No existing data found");
+          setFormData(EMPTY_FORM)
         }
-      }
-      
 
-    fetchExisting()
+        // store splits/volatility
+        if (svData?.data) {
+          setSplitsVolatility(svData.data)
+        }
+
+        toast.success("Loaded company data")
+        setHasHydrated(true)
+      } catch (err) {
+        toast.error("Failed to load data")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
   }, [selectedCompany])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,6 +227,7 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
   const resetForm = () => {
     setFormData(EMPTY_FORM)
     setExistingLineItems(null)
+    setSplitsVolatility(null)
   }
 
   return {
@@ -211,6 +238,7 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
     resetForm,
     disabled: loading,
     existingLineItems,
+    splitsVolatility,
     autoSaveCountdown,
     isAutoSaving,
     saveSuccess,

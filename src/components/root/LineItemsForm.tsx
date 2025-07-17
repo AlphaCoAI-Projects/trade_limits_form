@@ -35,11 +35,12 @@ const LineItemsForm = () => {
     isAutoSaving,
     saveSuccess,
     handleSubmit,
-    resetForm
+    resetForm,
+    splitsVolatility
   } = useLineItemsForm(selectedCompany)
 
   return (
-    <Card className="w-full max-w-2xl px-4 sm:px-6">
+    <Card className="w-full max-w-5xl px-4 sm:px-6">
       <CardHeader>
         <CardTitle className="text-xl">Line Items Form</CardTitle>
       </CardHeader>
@@ -66,6 +67,7 @@ const LineItemsForm = () => {
           disabled={submitLoading || !selectedCompany}
           bandsLoading={loading}
           selectedCompany={!!selectedCompany}
+          splitsVolatility={splitsVolatility}
         />
       </CardContent>
 
