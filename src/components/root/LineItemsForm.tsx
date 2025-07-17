@@ -37,7 +37,8 @@ const LineItemsForm = () => {
     handleSubmit,
     resetForm,
     splitsVolatility,
-    fy26Projection
+    fy26Projection,
+    brokerageConsensus
   } = useLineItemsForm(selectedCompany)
 
   return (
@@ -70,6 +71,7 @@ const LineItemsForm = () => {
           selectedCompany={!!selectedCompany}
           splitsVolatility={splitsVolatility}
           fy26Projection={fy26Projection}
+          brokerageConsensus={brokerageConsensus}
         />
       </CardContent>
 

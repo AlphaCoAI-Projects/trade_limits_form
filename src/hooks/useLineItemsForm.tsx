@@ -68,6 +68,15 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
     total_revenue?: number
     profit_after_tax?: number
   } | null>(null)
+  const [brokerageConsensus, setBrokerageConsensus] = useState<
+    {
+      avg_revenue?: number
+      avg_ebitda?: number
+      avg_pbt?: number
+      avg_pat?: number
+      avg_adj_pat?: number
+    } | null 
+    >(null)
 
   useEffect(() => {
     if (!selectedCompany) return
@@ -77,19 +86,22 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
       setLoading(true)
       setExistingLineItems(null)
       setSplitsVolatility(null)
+      setBrokerageConsensus(null)
 
       try {
-        const [patRes, svRes, projRes] = await Promise.all([
+        const [patRes, svRes, projRes, bcRes] = await Promise.all([
           fetch(`/api/entries?q=${selectedCompany.alpha_code}`),
           fetch(
             `/api/splits-volatility?alpha_code=${selectedCompany.alpha_code}`
           ),
           fetch(`/api/concalls?alpha_code=${selectedCompany.alpha_code}`),
+          fetch(`/api/brokerage-consensus?alpha_code=${selectedCompany.alpha_code}`),
         ])
 
         const patData = await patRes.json()
         const svData = await svRes.json()
         const projData = await projRes.json()
+        const bcData = await bcRes.json()
 
         // hydrate PAT form
         if (patData?.data) {
@@ -135,7 +147,16 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
         } else {
           setFy26Projection(null)
         }
-        
+
+        if (bcData?.FY26E) {
+          setBrokerageConsensus({
+            avg_revenue: bcData.FY26E.avg_revenue_from_operations ?? 0,
+            avg_ebitda: bcData.FY26E.avg_ebitda ?? 0,
+            avg_pbt: bcData.FY26E.avg_pbt ?? 0,
+            avg_pat: bcData.FY26E.avg_pat ?? 0,
+            avg_adj_pat: bcData.FY26E.avg_adj_pat ?? 0,
+          })
+        }        
 
         toast.success("Loaded company data")
         setHasHydrated(true)
@@ -255,6 +276,7 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
     setExistingLineItems(null)
     setSplitsVolatility(null)
     setFy26Projection(null)
+    setBrokerageConsensus(null)
   }
 
   return {
@@ -267,6 +289,7 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
     existingLineItems,
     splitsVolatility,
     fy26Projection,
+    brokerageConsensus,
     autoSaveCountdown,
     isAutoSaving,
     saveSuccess,

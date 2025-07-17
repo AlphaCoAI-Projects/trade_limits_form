@@ -27,6 +27,13 @@ interface Props {
     total_revenue?: number
     profit_after_tax?: number
   } | null
+  brokerageConsensus: {
+    avg_revenue?: number
+    avg_ebitda?: number
+    avg_pbt?: number
+    avg_pat?: number
+    avg_adj_pat?: number
+  } | null
 }
 
 const LineItemsFields: React.FC<Props> = ({
@@ -35,11 +42,13 @@ const LineItemsFields: React.FC<Props> = ({
   disabled,
   splitsVolatility,
   fy26Projection,
+  brokerageConsensus,
 }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* LEFT: Uneditable - Splits & Volatility */}
       <div className="space-y-6">
+        {/* splits */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Splits</h3>
           {["sales", "operating_profit", "net_profit"].map((key) => {
@@ -74,11 +83,23 @@ const LineItemsFields: React.FC<Props> = ({
           })}
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Volatility</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
-            {["sales", "operating_profit", "adjusted_pbt", "adjusted_pat"].map(
-              (key) => (
+        {/* volatility  */}
+        {splitsVolatility?.volatility &&
+        Object.keys(splitsVolatility.volatility).some(
+          (key) =>
+            splitsVolatility.volatility?.[
+              key as keyof typeof splitsVolatility.volatility
+            ] !== null
+        ) ? (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Volatility</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+              {[
+                "sales",
+                "operating_profit",
+                "adjusted_pbt",
+                "adjusted_pat",
+              ].map((key) => (
                 <div className="space-y-2" key={key}>
                   <Label>
                     {key.replace("_", " ").charAt(0).toUpperCase() +
@@ -95,10 +116,14 @@ const LineItemsFields: React.FC<Props> = ({
                     placeholder="No data"
                   />
                 </div>
-              )
-            )}
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <p className="text-muted-foreground italic">
+            No volatility data available
+          </p>
+        )}
 
         {/* projections  */}
         {fy26Projection && Object.keys(fy26Projection).length > 0 ? (
@@ -127,8 +152,37 @@ const LineItemsFields: React.FC<Props> = ({
           </div>
         ) : (
           <p className="text-muted-foreground italic">
-            No FY26 projections available
+            No FY26 projections data available
           </p>
+        )}
+
+        {/* brokerage consensus */}
+        {brokerageConsensus && Object.keys(brokerageConsensus).length > 0 ? (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">FY26 Brokerage Consensus</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+              {Object.entries(brokerageConsensus).map(([key, value]) => (
+                <div className="space-y-2" key={key}>
+                  <Label>
+                    {key.replace(/_/g, " ").charAt(0).toUpperCase() +
+                      key.replace(/_/g, " ").slice(1)}
+                  </Label>
+                  <Input
+                    value={
+                      value !== undefined && value !== null
+                        ? value.toString()
+                        : "0"
+                    }
+                    disabled
+                    className="text-muted-foreground"
+                    placeholder="No data"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-muted-foreground italic">No FY26 brokerage data available</p>
         )}
       </div>
 
