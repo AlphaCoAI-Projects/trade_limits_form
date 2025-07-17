@@ -24,6 +24,29 @@ interface Company {
   companyname: string
 }
 
+type ProjectionMap = Record<
+  string,
+  {
+    ebitda: number
+    total_revenue: number
+    profit_after_tax: number
+  }
+>
+
+interface ProjectionResponse {
+  concalls: {
+    year_id?: number
+    projections?: Record<
+      string,
+      {
+        ebitda?: number
+        total_revenue?: number
+        profit_after_tax?: number
+      }
+    >
+  }[]
+}
+
 export interface SplitsVolatilityData {
   splits: {
     sales?: number[]
@@ -62,12 +85,7 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [splitsVolatility, setSplitsVolatility] =
     useState<SplitsVolatilityData | null>(null)
-  const [fy26Projection, setFy26Projection] = useState<{
-    ebitda?: number
-    ebitda_margin?: number
-    total_revenue?: number
-    profit_after_tax?: number
-  } | null>(null)
+    const [projectionConcalls, setProjectionConcalls] = useState<any>([]);
   const [brokerageConsensus, setBrokerageConsensus] = useState<
     {
       avg_revenue?: number
@@ -128,25 +146,67 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
         if (svData?.data) {
           setSplitsVolatility(svData.data)
         }
-
-        const fy26 = projData?.FY26
-
-        if (
-          fy26 &&
-          typeof fy26 === "object" &&
-          ["ebitda", "ebitda_margin", "total_revenue", "profit_after_tax"].some(
-            (key) => key in fy26
-          )
-        ) {
-          setFy26Projection({
-            ebitda: fy26.ebitda ?? 0,
-            ebitda_margin: fy26.ebitda_margin ?? 0,
-            total_revenue: fy26.total_revenue ?? 0,
-            profit_after_tax: fy26.profit_after_tax ?? 0,
-          })
-        } else {
-          setFy26Projection(null)
+    
+        // Set the concalls data for projections table
+        if (projData?.concalls) {
+          setProjectionConcalls(projData.concalls);
         }
+
+        // const fy26 = projData?.FY26
+
+        // if (
+        //   fy26 &&
+        //   typeof fy26 === "object" &&
+        //   ["ebitda", "total_revenue", "profit_after_tax"].some(
+        //     (key) => key in fy26
+        //   )
+        // ) {
+        //   setFy26Projection({
+        //     ebitda: fy26.ebitda ?? 0,
+        //     total_revenue: fy26.total_revenue ?? 0,
+        //     profit_after_tax: fy26.profit_after_tax ?? 0,
+        //   })
+        // } else {
+        //   setFy26Projection(null)
+        // }
+
+
+//         const projectionMap: Record<
+//   string,
+//   {
+//     ebitda: number
+//     total_revenue: number
+//     profit_after_tax: number
+//   }
+// > = {}
+
+// if (Array.isArray(projData?.concalls)) {
+//   projData.concalls
+//     .sort((a, b) => (b.year_id || 0) - (a.year_id || 0)) // newest first
+//     .forEach((concall: any) => {
+//       const projections = concall?.projections
+//       if (projections && typeof projections === "object") {
+//         Object.entries(projections).forEach(([fyKey, fyVal]: any) => {
+//           if (!projectionMap[fyKey]) {
+//             projectionMap[fyKey] = {
+//               ebitda: 0,
+//               total_revenue: 0,
+//               profit_after_tax: 0,
+//             }
+//           }
+
+//           const current = projectionMap[fyKey]
+//           projectionMap[fyKey] = {
+//             ebitda: fyVal.ebitda || current.ebitda,
+//             total_revenue: fyVal.total_revenue || current.total_revenue,
+//             profit_after_tax:
+//               fyVal.profit_after_tax || current.profit_after_tax,
+//           }
+//         })
+//       }
+//     })
+// }
+
 
         if (bcData?.FY26E) {
           setBrokerageConsensus({
@@ -275,7 +335,7 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
     setFormData(EMPTY_FORM)
     setExistingLineItems(null)
     setSplitsVolatility(null)
-    setFy26Projection(null)
+    setProjectionConcalls(null)
     setBrokerageConsensus(null)
   }
 
@@ -288,7 +348,7 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
     disabled: loading,
     existingLineItems,
     splitsVolatility,
-    fy26Projection,
+    projectionConcalls,
     brokerageConsensus,
     autoSaveCountdown,
     isAutoSaving,

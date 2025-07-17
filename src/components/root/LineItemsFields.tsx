@@ -4,6 +4,8 @@ import type React from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SplitsVolatilityData } from "@/hooks/useLineItemsForm"
+import { ProjectionTable } from "./ProjectionTable"
+import { useState } from "react"
 
 interface FormData {
   upper_limit: string
@@ -21,12 +23,7 @@ interface Props {
   bandsLoading: boolean
   selectedCompany: boolean
   splitsVolatility: SplitsVolatilityData | null
-  fy26Projection: {
-    ebitda?: number
-    ebitda_margin?: number
-    total_revenue?: number
-    profit_after_tax?: number
-  } | null
+  projectionConcalls: any
   brokerageConsensus: {
     avg_revenue?: number
     avg_ebitda?: number
@@ -41,9 +38,16 @@ const LineItemsFields: React.FC<Props> = ({
   onChange,
   disabled,
   splitsVolatility,
-  fy26Projection,
+  projectionConcalls,
   brokerageConsensus,
 }) => {
+  type SplitKey = keyof SplitsVolatilityData["splits"]
+  const SPLIT_KEYS: { key: SplitKey; label: string }[] = [
+    { key: "sales", label: "Sales" },
+    { key: "operating_profit", label: "Operating Profit" },
+    { key: "net_profit", label: "Net Profit" },
+  ]
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* LEFT: Uneditable - Splits & Volatility */}
@@ -51,36 +55,52 @@ const LineItemsFields: React.FC<Props> = ({
         {/* splits */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Splits</h3>
-          {["sales", "operating_profit", "net_profit"].map((key) => {
-            const values =
-              splitsVolatility?.splits?.[
-                key as keyof typeof splitsVolatility.splits
-              ]
-            return (
-              <div key={key} className="space-y-2">
-                <Label>
-                  {key.replace("_", " ").charAt(0).toUpperCase() +
-                    key.replace("_", " ").slice(1)}
-                </Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {values && values.length > 0 ? (
-                    values.map((value, i) => (
-                      <Input
-                        key={i}
-                        value={value.toFixed(4)}
-                        disabled
-                        className="text-muted-foreground"
-                      />
-                    ))
-                  ) : (
-                    <div className="col-span-4 text-sm text-muted-foreground italic">
-                      No data
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
+
+          <div className="overflow-x-auto rounded-md border">
+            <table className="min-w-full text-sm text-center">
+              <thead className="bg-muted text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-2 text-left">Metric</th>
+                  <th className="px-4 py-2">Q1</th>
+                  <th className="px-4 py-2">Q2</th>
+                  <th className="px-4 py-2">Q3</th>
+                  <th className="px-4 py-2">Q4</th>
+                </tr>
+              </thead>
+              <tbody>
+                {SPLIT_KEYS.map(({ key, label }) => {
+                  const values = splitsVolatility?.splits?.[key] ?? []
+                  const hasValues = values.length > 0
+                  return (
+                    <tr key={key} className="border-t">
+                      <td className="px-4 py-2 text-left font-medium">
+                        {label}
+                      </td>
+                      {hasValues ? (
+                        [0, 1, 2, 3].map((i) => (
+                          <td
+                            key={i}
+                            className="px-4 py-2 text-muted-foreground"
+                          >
+                            {values[i] !== undefined
+                              ? values[i].toFixed(4)
+                              : "--"}
+                          </td>
+                        ))
+                      ) : (
+                        <td
+                          className="px-4 py-2 text-muted-foreground italic"
+                          colSpan={4}
+                        >
+                          No data available
+                        </td>
+                      )}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* volatility  */}
@@ -99,24 +119,27 @@ const LineItemsFields: React.FC<Props> = ({
                 "operating_profit",
                 "adjusted_pbt",
                 "adjusted_pat",
-              ].map((key) => (
-                <div className="space-y-2" key={key}>
-                  <Label>
-                    {key.replace("_", " ").charAt(0).toUpperCase() +
-                      key.replace("_", " ").slice(1)}
-                  </Label>
-                  <Input
-                    value={
-                      splitsVolatility?.volatility?.[
-                        key as keyof typeof splitsVolatility.volatility
-                      ]?.toFixed(4) || ""
-                    }
-                    disabled
-                    className="text-muted-foreground"
-                    placeholder="No data"
-                  />
-                </div>
-              ))}
+              ].map((key) => {
+                const value =
+                  splitsVolatility?.volatility?.[
+                    key as keyof typeof splitsVolatility.volatility
+                  ]
+
+                return (
+                  <div className="flex items-center gap-2" key={key}>
+                    <Label className="w-40 capitalize text-sm">
+                      {key.replace(/_/g, " ")}:
+                    </Label>
+                    <div className="text-sm text-muted-foreground">
+                      {value != null ? (
+                        value.toFixed(4)
+                      ) : (
+                        <span className="italic">No data</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         ) : (
@@ -126,64 +149,31 @@ const LineItemsFields: React.FC<Props> = ({
         )}
 
         {/* projections  */}
-        {fy26Projection && Object.keys(fy26Projection).length > 0 ? (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">FY26 Concall Projections</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
-              {Object.entries(fy26Projection).map(([key, value]) => (
-                <div className="space-y-2" key={key}>
-                  <Label>
-                    {key.replace(/_/g, " ").charAt(0).toUpperCase() +
-                      key.replace(/_/g, " ").slice(1)}
-                  </Label>
-                  <Input
-                    value={
-                      value !== undefined && value !== null
-                        ? value.toFixed(2)
-                        : "0.00"
-                    }
-                    disabled
-                    className="text-muted-foreground"
-                    placeholder="No data"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <p className="text-muted-foreground italic">
-            No FY26 projections data available
-          </p>
-        )}
+        <ProjectionTable concalls={projectionConcalls} />
 
         {/* brokerage consensus */}
         {brokerageConsensus && Object.keys(brokerageConsensus).length > 0 ? (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">FY26 Brokerage Consensus</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
-              {Object.entries(brokerageConsensus).map(([key, value]) => (
-                <div className="space-y-2" key={key}>
-                  <Label>
-                    {key.replace(/_/g, " ").charAt(0).toUpperCase() +
-                      key.replace(/_/g, " ").slice(1)}
-                  </Label>
-                  <Input
-                    value={
-                      value !== undefined && value !== null
-                        ? value.toString()
-                        : "0"
-                    }
-                    disabled
-                    className="text-muted-foreground"
-                    placeholder="No data"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <p className="text-muted-foreground italic">No FY26 brokerage data available</p>
-        )}
+  <div className="space-y-4">
+    <h3 className="text-lg font-semibold">FY26 Brokerage Consensus</h3>
+    <div className="grid md:grid-cols-2 grid-cols-2 gap-4 text-muted-foreground text-sm">
+      {Object.entries(brokerageConsensus).map(([key, value]) => (
+        <div key={key} className="flex items-center space-x-1">
+          <span className="font-medium text-black">
+            {key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}:
+          </span>
+          <span>
+            {value !== undefined && value !== null ? value.toString() : "0"}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+) : (
+  <p className="text-muted-foreground italic">
+    No FY26 brokerage data available
+  </p>
+)}
+
       </div>
 
       {/* RIGHT: Editable Limits & Bands */}

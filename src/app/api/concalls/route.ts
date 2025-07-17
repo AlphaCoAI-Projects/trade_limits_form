@@ -7,7 +7,7 @@ export interface Concall {
   quarter_id: string
   processed: string
   projections?: {
-    FY26?: {
+    [fy: string]: {
       ebitda: number | null
       ebitda_margin: number | null
       total_revenue: number | null
@@ -41,38 +41,26 @@ export async function GET(req: Request) {
   try {
     await connectDB()
 
-    const projectionDoc = await Projection.findOne({
-      alpha_code,
-    }).lean<ProjectionType>()
+    const projectionDoc = await Projection.findOne({ alpha_code }).lean<ProjectionType>()
 
-    if (!projectionDoc?.concalls?.length)
+    if (!projectionDoc?.concalls?.length) {
       return NextResponse.json({ error: "No concalls found" }, { status: 404 })
+    }
 
-    const fy26Concall = projectionDoc.concalls
-      .filter(
-        (c) =>
-          c.year_id === 2026 &&
-          c.processed === "processed" &&
-          c.projections?.FY26
-      )
-      .sort((a, b) => {
-        const qA = Number(a.quarter_id.replace("q", ""))
-        const qB = Number(b.quarter_id.replace("q", ""))
-        return qB - qA
-      })[0]
-
-    if (!fy26Concall?.projections?.FY26)
-      return NextResponse.json(
-        { error: "No FY26 projections in concalls" },
-        { status: 200 }
-      )
+    const filteredConcalls = projectionDoc.concalls
+      .filter((c) => c.processed === "processed" && c.projections && Object.keys(c.projections).length > 0)
+      .map(({ year_id, quarter_id, projections }) => ({
+        year_id,
+        quarter_id,
+        projections,
+      }))
 
     return NextResponse.json({
       alpha_code,
-      FY26: fy26Concall.projections.FY26,
+      concalls: filteredConcalls,
     })
   } catch (e) {
-    console.error("Error fetching FY26 projection:", e)
+    console.error("Error fetching projections:", e)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
