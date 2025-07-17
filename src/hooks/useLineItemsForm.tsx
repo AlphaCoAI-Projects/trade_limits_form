@@ -6,9 +6,8 @@ interface FormData {
   lower_limit: string
   super_upper_limit: string
   super_lower_limit: string
-  lower_band: string
-  median_band: string
-  upper_band: string
+  target_pe_lower: string
+  target_pe_upper: string
 }
 
 interface PatData {
@@ -16,9 +15,8 @@ interface PatData {
   lower_limit?: number
   super_upper_limit?: number
   super_lower_limit?: number
-  lower_band?: number
-  median_band?: number
-  upper_band?: number
+  target_pe_lower?: number
+  target_pe_upper?: number
 }
 
 interface Company {
@@ -45,14 +43,15 @@ const EMPTY_FORM: FormData = {
   lower_limit: "",
   super_upper_limit: "",
   super_lower_limit: "",
-  lower_band: "",
-  median_band: "",
-  upper_band: "",
+  target_pe_lower: "",
+  target_pe_upper: "",
 }
 
 export const useLineItemsForm = (selectedCompany: Company | null) => {
   const [formData, setFormData] = useState<FormData>(EMPTY_FORM)
-  const [existingLineItems, setExistingLineItems] = useState<PatData | null>(null)
+  const [existingLineItems, setExistingLineItems] = useState<PatData | null>(
+    null
+  )
   const [loading, setLoading] = useState(false)
   const [hasHydrated, setHasHydrated] = useState(false)
   const [lastSavedFormData, setLastSavedFormData] = useState<FormData>(formData)
@@ -61,8 +60,14 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
     null
   )
   const [saveSuccess, setSaveSuccess] = useState(false)
-  const [splitsVolatility, setSplitsVolatility] = useState<SplitsVolatilityData | null>(null)
-  
+  const [splitsVolatility, setSplitsVolatility] =
+    useState<SplitsVolatilityData | null>(null)
+  const [fy26Projection, setFy26Projection] = useState<{
+    ebitda?: number
+    ebitda_margin?: number
+    total_revenue?: number
+    profit_after_tax?: number
+  } | null>(null)
 
   useEffect(() => {
     if (!selectedCompany) return
@@ -74,13 +79,17 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
       setSplitsVolatility(null)
 
       try {
-        const [patRes, svRes] = await Promise.all([
+        const [patRes, svRes, projRes] = await Promise.all([
           fetch(`/api/entries?q=${selectedCompany.alpha_code}`),
-          fetch(`/api/splits-volatility?alpha_code=${selectedCompany.alpha_code}`)
+          fetch(
+            `/api/splits-volatility?alpha_code=${selectedCompany.alpha_code}`
+          ),
+          fetch(`/api/concalls?alpha_code=${selectedCompany.alpha_code}`),
         ])
 
         const patData = await patRes.json()
         const svData = await svRes.json()
+        const projData = await projRes.json()
 
         // hydrate PAT form
         if (patData?.data) {
@@ -91,16 +100,15 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
             lower_limit: data.lower_limit?.toString() || "",
             super_upper_limit: data.super_upper_limit?.toString() || "",
             super_lower_limit: data.super_lower_limit?.toString() || "",
-            lower_band: data.lower_band?.toString() || "",
-            median_band: data.median_band?.toString() || "",
-            upper_band: data.upper_band?.toString() || "",
+            target_pe_lower: data.target_pe_lower?.toString() || "",
+            target_pe_upper: data.target_pe_upper?.toString() || "",
           }
 
           setExistingLineItems(data)
           setFormData(hydrated)
           setLastSavedFormData(hydrated)
         } else {
-          toast.info("No existing data found");
+          toast.info("No existing data found")
           setFormData(EMPTY_FORM)
         }
 
@@ -108,6 +116,26 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
         if (svData?.data) {
           setSplitsVolatility(svData.data)
         }
+
+        const fy26 = projData?.FY26
+
+        if (
+          fy26 &&
+          typeof fy26 === "object" &&
+          ["ebitda", "ebitda_margin", "total_revenue", "profit_after_tax"].some(
+            (key) => key in fy26
+          )
+        ) {
+          setFy26Projection({
+            ebitda: fy26.ebitda ?? 0,
+            ebitda_margin: fy26.ebitda_margin ?? 0,
+            total_revenue: fy26.total_revenue ?? 0,
+            profit_after_tax: fy26.profit_after_tax ?? 0,
+          })
+        } else {
+          setFy26Projection(null)
+        }
+        
 
         toast.success("Loaded company data")
         setHasHydrated(true)
@@ -143,9 +171,8 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
           lower_limit: toNullableFloat(formData.lower_limit),
           super_upper_limit: toNullableFloat(formData.super_upper_limit),
           super_lower_limit: toNullableFloat(formData.super_lower_limit),
-          lower_band: toNullableFloat(formData.lower_band),
-          median_band: toNullableFloat(formData.median_band),
-          upper_band: toNullableFloat(formData.upper_band),
+          target_pe_lower: toNullableFloat(formData.target_pe_lower),
+          target_pe_upper: toNullableFloat(formData.target_pe_upper),
         }),
       })
 
@@ -204,9 +231,8 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
           lower_limit: toNullableFloat(formData.lower_limit),
           super_upper_limit: toNullableFloat(formData.super_upper_limit),
           super_lower_limit: toNullableFloat(formData.super_lower_limit),
-          lower_band: toNullableFloat(formData.lower_band),
-          median_band: toNullableFloat(formData.median_band),
-          upper_band: toNullableFloat(formData.upper_band),
+          target_pe_lower: toNullableFloat(formData.target_pe_lower),
+          target_pe_upper: toNullableFloat(formData.target_pe_upper),
         }),
       })
 
@@ -228,6 +254,7 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
     setFormData(EMPTY_FORM)
     setExistingLineItems(null)
     setSplitsVolatility(null)
+    setFy26Projection(null)
   }
 
   return {
@@ -239,6 +266,7 @@ export const useLineItemsForm = (selectedCompany: Company | null) => {
     disabled: loading,
     existingLineItems,
     splitsVolatility,
+    fy26Projection,
     autoSaveCountdown,
     isAutoSaving,
     saveSuccess,

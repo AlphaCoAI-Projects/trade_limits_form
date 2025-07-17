@@ -28,9 +28,8 @@ export async function POST(
       lower_limit: toNullableFloat(body.lower_limit),
       super_upper_limit: toNullableFloat(body.super_upper_limit),
       super_lower_limit: toNullableFloat(body.super_lower_limit),
-      lower_band: toNullableFloat(body.lower_band),
-      median_band: toNullableFloat(body.median_band),
-      upper_band: toNullableFloat(body.upper_band),
+      target_pe_lower: toNullableFloat(body.target_pe_lower),
+      target_pe_upper: toNullableFloat(body.target_pe_upper),
     }
 
     const result = await Limit.findOneAndUpdate(

@@ -10,9 +10,8 @@ interface FormData {
   super_upper_limit: string
   lower_limit: string
   super_lower_limit: string
-  lower_band: string
-  median_band: string
-  upper_band: string
+  target_pe_lower: string
+  target_pe_upper: string
 }
 
 interface Props {
@@ -22,6 +21,12 @@ interface Props {
   bandsLoading: boolean
   selectedCompany: boolean
   splitsVolatility: SplitsVolatilityData | null
+  fy26Projection: {
+    ebitda?: number
+    ebitda_margin?: number
+    total_revenue?: number
+    profit_after_tax?: number
+  } | null
 }
 
 const LineItemsFields: React.FC<Props> = ({
@@ -29,111 +34,103 @@ const LineItemsFields: React.FC<Props> = ({
   onChange,
   disabled,
   splitsVolatility,
+  fy26Projection,
 }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* LEFT: Uneditable - Splits & Volatility */}
-      {/* {splitsVolatility && (
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold">Splits</h3>
-            {["sales", "operating_profit", "net_profit"].map((key) => (
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Splits</h3>
+          {["sales", "operating_profit", "net_profit"].map((key) => {
+            const values =
+              splitsVolatility?.splits?.[
+                key as keyof typeof splitsVolatility.splits
+              ]
+            return (
               <div key={key} className="space-y-2">
                 <Label>
                   {key.replace("_", " ").charAt(0).toUpperCase() +
                     key.replace("_", " ").slice(1)}
                 </Label>
                 <div className="grid grid-cols-4 gap-2">
-                  {splitsVolatility.splits?.[
-                    key as keyof typeof splitsVolatility.splits
-                  ]?.map((value, i) => (
-                    <Input
-                      key={i}
-                      value={value.toFixed(4)}
-                      disabled
-                      className="text-muted-foreground"
-                    />
-                  ))}
+                  {values && values.length > 0 ? (
+                    values.map((value, i) => (
+                      <Input
+                        key={i}
+                        value={value.toFixed(4)}
+                        disabled
+                        className="text-muted-foreground"
+                      />
+                    ))
+                  ) : (
+                    <div className="col-span-4 text-sm text-muted-foreground italic">
+                      No data
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+            )
+          })}
+        </div>
 
-          <div>
-            <h3 className="text-lg font-semibold">Volatility</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
-              {Object.entries(splitsVolatility.volatility).map(([key, val]) => (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Volatility</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+            {["sales", "operating_profit", "adjusted_pbt", "adjusted_pat"].map(
+              (key) => (
                 <div className="space-y-2" key={key}>
                   <Label>
                     {key.replace("_", " ").charAt(0).toUpperCase() +
                       key.replace("_", " ").slice(1)}
                   </Label>
                   <Input
-                    value={val?.toFixed(4)}
+                    value={
+                      splitsVolatility?.volatility?.[
+                        key as keyof typeof splitsVolatility.volatility
+                      ]?.toFixed(4) || ""
+                    }
                     disabled
                     className="text-muted-foreground"
+                    placeholder="No data"
+                  />
+                </div>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* projections  */}
+        {fy26Projection && Object.keys(fy26Projection).length > 0 ? (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">FY26 Concall Projections</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+              {Object.entries(fy26Projection).map(([key, value]) => (
+                <div className="space-y-2" key={key}>
+                  <Label>
+                    {key.replace(/_/g, " ").charAt(0).toUpperCase() +
+                      key.replace(/_/g, " ").slice(1)}
+                  </Label>
+                  <Input
+                    value={
+                      value !== undefined && value !== null
+                        ? value.toFixed(2)
+                        : "0.00"
+                    }
+                    disabled
+                    className="text-muted-foreground"
+                    placeholder="No data"
                   />
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      )} */}
-
-<div className="space-y-6">
-    <div>
-      <h3 className="text-lg font-semibold">Splits</h3>
-      {["sales", "operating_profit", "net_profit"].map((key) => {
-        const values = splitsVolatility?.splits?.[key as keyof typeof splitsVolatility.splits]
-        return (
-          <div key={key} className="space-y-2">
-            <Label>
-              {key.replace("_", " ").charAt(0).toUpperCase() +
-                key.replace("_", " ").slice(1)}
-            </Label>
-            <div className="grid grid-cols-4 gap-2">
-              {values && values.length > 0 ? (
-                values.map((value, i) => (
-                  <Input
-                    key={i}
-                    value={value.toFixed(4)}
-                    disabled
-                    className="text-muted-foreground"
-                  />
-                ))
-              ) : (
-                <div className="col-span-4 text-sm text-muted-foreground italic">
-                  No data
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })}
-    </div>
-
-    <div>
-      <h3 className="text-lg font-semibold">Volatility</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
-        {["sales", "operating_profit", "adjusted_pbt", "adjusted_pat"].map((key) => (
-          <div className="space-y-2" key={key}>
-            <Label>
-              {key.replace("_", " ").charAt(0).toUpperCase() +
-                key.replace("_", " ").slice(1)}
-            </Label>
-            <Input
-              value={
-                splitsVolatility?.volatility?.[key as keyof typeof splitsVolatility.volatility]?.toFixed(4) || ""
-              }
-              disabled
-              className="text-muted-foreground"
-              placeholder="No data"
-            />
-          </div>
-        ))}
+        ) : (
+          <p className="text-muted-foreground italic">
+            No FY26 projections available
+          </p>
+        )}
       </div>
-    </div>
-  </div>
 
       {/* RIGHT: Editable Limits & Bands */}
       <div className="space-y-6">
@@ -191,40 +188,28 @@ const LineItemsFields: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="lower_band">Lower Band</Label>
+            <Label htmlFor="target_pe_lower">Target PE Lower</Label>
             <Input
-              id="lower_band"
-              name="lower_band"
+              id="target_pe_lower"
+              name="target_pe_lower"
               type="number"
-              value={formData.lower_band}
+              value={formData.target_pe_lower}
               onChange={onChange}
-              placeholder="Enter Lower Band"
+              placeholder="Enter Target PE Lower"
               disabled={disabled}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="median_band">Median Band</Label>
+            <Label htmlFor="target_pe_upper">Target PE Upper</Label>
             <Input
-              id="median_band"
-              name="median_band"
+              id="target_pe_upper"
+              name="target_pe_upper"
               type="number"
-              value={formData.median_band}
+              value={formData.target_pe_upper}
               onChange={onChange}
-              placeholder="Enter Median Band"
-              disabled={disabled}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="upper_band">Upper Band</Label>
-            <Input
-              id="upper_band"
-              name="upper_band"
-              type="number"
-              value={formData.upper_band}
-              onChange={onChange}
-              placeholder="Enter Upper Band"
+              placeholder="Enter Target PE Upper"
               disabled={disabled}
             />
           </div>
