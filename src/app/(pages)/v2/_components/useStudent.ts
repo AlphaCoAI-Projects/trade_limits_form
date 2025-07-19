@@ -1,7 +1,7 @@
 import useSWR, { mutate } from 'swr';
 import { Student } from "@/types/table.types";
 
-const url = 'http://localhost:3000/students';
+const url = 'students';
 
 async function updateRequest(id: number, data: Student) {
   const response = await fetch(`${url}/${id}`, {

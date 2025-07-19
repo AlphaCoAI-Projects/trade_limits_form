@@ -6,6 +6,10 @@ import { EditCell } from './EditCell'
 const columnHelper = createColumnHelper<Student>()
 
 export const columns = [
+  columnHelper.display({
+    id: 'edit',
+    cell: EditCell,
+  }),
   columnHelper.accessor('studentNumber', {
     header: 'Student Id',
     cell: TableCell,
@@ -50,9 +54,5 @@ export const columns = [
       ],
       required: true,
     },
-  }),
-  columnHelper.display({
-    id: 'edit',
-    cell: EditCell,
   }),
 ]

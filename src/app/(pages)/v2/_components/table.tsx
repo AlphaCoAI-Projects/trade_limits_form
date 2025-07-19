@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react";
-import { Student } from "@/types/table.types";
+import { Student, ValidRows } from "@/types/table.types";
 import "./table.css";
 
 import {
@@ -10,19 +10,21 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { columns } from "./Columns";
-import useStudents from "./useStudent";
-// import { FooterCell } from "./";
 
 export const FormTable = () => {
-  const { data: originalData, isValidating, addRow, updateRow, deleteRow } = useStudents();
   const [data, setData] = useState<Student[]>([]);
   const [editedRows, setEditedRows] = useState({});
-  const [validRows, setValidRows] = useState({});
+  const [validRows, setValidRows] = useState<ValidRows>({});
+  const [activeCellEdit, setActiveCellEdit] = useState<{ rowId: string; columnId: string } | null>(null)
 
   useEffect(() => {
-    if (isValidating) return;
-    setData([...originalData]);
-  }, [isValidating]);
+    async function fetchData() {
+      const res = await fetch("/db.json");
+      const json = await res.json();
+      setData(json.students);
+    }
+    fetchData();
+  }, []);
 
   const table = useReactTable({
     data,
@@ -34,15 +36,13 @@ export const FormTable = () => {
       setEditedRows,
       validRows,
       setValidRows,
+      activeCellEdit,
+      setActiveCellEdit,
       revertData: (rowIndex: number) => {
-        setData((old) =>
-          old.map((row, index) =>
-            index === rowIndex ? originalData[rowIndex] : row
-          )
-        );
+       // to be removed
       },
       updateRow: (rowIndex: number) => {
-        updateRow(data[rowIndex].id, data[rowIndex]);
+        // to be removed
       },
       updateData: (rowIndex: number, columnId: string, value: string, isValid: boolean) => {
         setData((old) =>
@@ -68,24 +68,24 @@ export const FormTable = () => {
           studentNumber: id,
           name: "",
           dateOfBirth: "",
-          major: ""
+          major: "",
         };
-        addRow(newRow);
+        setData((prev) => [...prev, newRow]);
       },
       removeRow: (rowIndex: number) => {
-        deleteRow(data[rowIndex].id);
+        setData((prev) => prev.filter((_, index) => index !== rowIndex));
       },
       removeSelectedRows: (selectedRows: number[]) => {
-        selectedRows.forEach((rowIndex) => {
-          deleteRow(data[rowIndex].id);
-        });
+        setData((prev) =>
+          prev.filter((_, index) => !selectedRows.includes(index))
+        );
       },
     },
   });
 
   return (
-    <article className="table-container border-4">
-      <table>
+    <article className="table-container max-w-5xl">
+      <table className="w-5xl">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
@@ -121,8 +121,6 @@ export const FormTable = () => {
           </tr>
         </tfoot>
       </table>
-      {/* <pre>{JSON.stringify(data, null, "\t")}</pre> */}
     </article>
-
   );
 };
