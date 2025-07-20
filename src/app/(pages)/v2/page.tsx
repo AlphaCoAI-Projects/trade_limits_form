@@ -11,7 +11,7 @@ const TradeFormEditableTable = () => {
         <FormHeader />
       </div>
       <div>
-        <FormTable />
+        {/* <FormTable /> */}
       </div>
       <div>
         <FormContent />
