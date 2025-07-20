@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Student, TableMeta } from "@/types/table.types";
+import { Company, TableMeta } from "@/types/table.types";
 import { Row, Table } from "@tanstack/react-table";
 import { Edit, X, Check } from "lucide-react"
 import { MouseEvent, useEffect } from "react"
 
 type EditCellProps = {
-  row: Row<Student>;
-  table: Table<Student>;
+  row: Row<Company>;
+  table: Table<Company>;
 };
 
 export const EditCell = ({ row, table }: EditCellProps) => {

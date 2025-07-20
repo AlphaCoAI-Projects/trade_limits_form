@@ -5,7 +5,7 @@ import {
   CellContext,
 } from "@tanstack/react-table"
 import { useState, useEffect, ChangeEvent, useRef } from "react"
-import { Student, TableMeta } from "@/types/table.types"
+import { Company, TableMeta } from "@/types/table.types"
 import "./table.css"
 
 type Option = {
@@ -13,8 +13,8 @@ type Option = {
   value: string
 }
 
-type TableCellProps = CellContext<Student, unknown> & {
-  table: Table<Student>
+type TableCellProps = CellContext<Company, unknown> & {
+  table: Table<Company>
 }
 
 export const TableCell = ({
@@ -44,13 +44,13 @@ export const TableCell = ({
     tableMeta?.activeCellEdit?.rowId === row.id &&
     tableMeta?.activeCellEdit?.columnId === column.id
 
-  useEffect(() => {
-    setValue(initialValue as string)
-  }, [initialValue])
+    useEffect(() => {
+      setValue(initialValue !== null ? String(initialValue) : "")
+    }, [initialValue])    
 
   const handleDoubleClick = () => {
     if (!isRowEditing) {
-      tableMeta?.setActiveCellEdit({ rowId: row.id, columnId: column.id })
+      tableMeta?.setActiveCellEdit({ rowId: row.id, columnId: column.id  as keyof Company })
     }
   }
 
@@ -81,7 +81,7 @@ export const TableCell = ({
     displayValidationMessage(e)
     tableMeta?.updateData(
       row.index,
-      column.id,
+      column.id as keyof Company,
       value,
       e.target.validity.valid
     )
@@ -96,7 +96,7 @@ export const TableCell = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      tableMeta?.updateData(row.index, column.id, value, true)
+      tableMeta?.updateData(row.index, column.id as keyof Company, value, true)
       tableMeta?.updateRow(row.index)
       tableMeta?.setActiveCellEdit(null)
     } else if (e.key === "Escape") {
@@ -133,7 +133,7 @@ export const TableCell = ({
     return (
       <input
         ref={inputRef as React.RefObject<HTMLInputElement>}
-        value={value}
+        value={value ?? ""}
         onChange={handleChange}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
@@ -141,8 +141,10 @@ export const TableCell = ({
         required={columnMeta?.required}
         pattern={columnMeta?.pattern}
         title={validationMessage}
+        className="w-full"
       />
     )
+    
   }
 
   return (

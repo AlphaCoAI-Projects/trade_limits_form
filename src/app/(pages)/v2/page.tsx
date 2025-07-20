@@ -8,10 +8,7 @@ const TradeFormEditableTable = () => {
   return (
     <div className="h-auto md:m-10 m-4 flex flex-col justify-center items-center">
       <div>
-        <FormHeader />
-      </div>
-      <div>
-        {/* <FormTable /> */}
+        <FormTable />
       </div>
       <div>
         <FormContent />

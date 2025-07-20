@@ -1,58 +1,35 @@
-import { createColumnHelper } from '@tanstack/react-table'
-import { TableCell } from './TableCell'
-import { Student } from "@/types/table.types";
-import { EditCell } from './EditCell'
+import { createColumnHelper } from "@tanstack/react-table"
+import { Company } from "@/types/table.types"
+import { TableCell } from "./TableCell"
+import { EditCell } from "./EditCell"
 
-const columnHelper = createColumnHelper<Student>()
+const h = createColumnHelper<Company>()
 
-export const columns = [
-  columnHelper.display({
-    id: 'edit',
-    cell: EditCell,
+export const tableColumns = [
+  h.display({ id: "edit", cell: EditCell }),
+  h.accessor("company_name", {
+    header: "Company",
+    cell: ({ getValue }) => <span>{getValue()}</span>,
   }),
-  columnHelper.accessor('studentNumber', {
-    header: 'Student Id',
-    cell: TableCell,
-    meta: {
-      type: 'number',
-    },
-  }),
-  columnHelper.accessor('name', {
-    header: 'Full Name',
-    cell: TableCell,
-    meta: {
-      type: 'text',
-      required: true,
-      pattern: '^[a-zA-Z ]+$',
-    },
-  }),
-  columnHelper.accessor('dateOfBirth', {
-    header: 'Date Of Birth',
-    cell: TableCell,
-    meta: {
-      type: 'date',
-      required: true,
-      validate: (value: string) => {
-        const date = new Date(value);
-        const today = new Date();
-        return date <= today;
+
+  ...(
+    [
+      "upper_limit",
+      "lower_limit",
+      "super_upper_limit",
+      "super_lower_limit",
+      "target_pe_lower",
+      "target_pe_upper",
+      "industry_pe"
+    ] as const
+  ).map((field) =>
+    h.accessor(field, {
+      header: field.replace(/_/g, " "),
+      cell: TableCell,
+      meta: {
+        type: "number",
+        required: false,
       },
-      validationMessage: 'Date cannot be in the future',
-    },
-  }),
-  columnHelper.accessor('major', {
-    header: 'Major',
-    cell: TableCell,
-    meta: {
-      type: 'select',
-      options: [
-        { value: '', label: 'Select' },
-        { value: 'Computer Science', label: 'Computer Science' },
-        { value: 'Communications', label: 'Communications' },
-        { value: 'Business', label: 'Business' },
-        { value: 'Psychology', label: 'Psychology' },
-      ],
-      required: true,
-    },
-  }),
+    })
+  ),
 ]
