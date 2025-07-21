@@ -30,6 +30,7 @@ export async function POST(
       super_lower_limit: toNullableFloat(body.super_lower_limit),
       target_pe_lower: toNullableFloat(body.target_pe_lower),
       target_pe_upper: toNullableFloat(body.target_pe_upper),
+      industry_pe: toNullableFloat(body.industry_pe),
     }
 
     const result = await Limit.findOneAndUpdate(

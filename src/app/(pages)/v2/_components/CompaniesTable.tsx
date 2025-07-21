@@ -41,7 +41,7 @@ export const CompaniesTable = ({ rows, limits, onView }: Props) => {
           <tr key={row.alpha_code ?? `row-${idx}`}>
             <td className="border px-2 py-1 text-left">{row.company_name}</td>
 
-            <td className="border px-2 py-1 flex items-center gap-2 justify-center">
+            <td className="border-b px-2 py-1 flex items-center gap-2 justify-center">
               <Button variant="icon" size="icon" onClick={() => onView(row)}>
                 <Eye className="w-4 h-4" />
               </Button>
@@ -87,7 +87,7 @@ export const CompaniesTable = ({ rows, limits, onView }: Props) => {
               >
                 {row.isEditing ? (
                   <Input
-                    type="number"
+                    type="text"
                     className="text-right"
                     value={row[key] ?? ""}
                     onChange={(e) => updateField(idx, key, e.target.value)}

@@ -65,7 +65,7 @@ export const CompanyInfoModal = ({
                           {f.move_back_by === 0 ? "YOY" : "Q ‑ 1"}
                         </td>
                         <td className="border px-2 py-1 font-medium">
-                          {loading ? "Fetching.." : f?.prediction?.toFixed(2)}
+                          {loading ? "Fetching.." : !f?.prediction ? "No prediction available" : f?.prediction?.toFixed(2)}
                         </td>
                       </tr>
                     ))}
