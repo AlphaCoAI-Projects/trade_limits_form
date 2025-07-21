@@ -83,7 +83,9 @@ const LineItemsFields: React.FC<Props> = ({
                             className="px-4 py-2 text-muted-foreground"
                           >
                             {values[i] !== undefined
-                              ? values[i].toFixed(4)
+                              ? typeof values[i] === "number"
+                                ? values[i].toFixed(4)
+                                : "--"
                               : "--"}
                           </td>
                         ))
@@ -153,27 +155,31 @@ const LineItemsFields: React.FC<Props> = ({
 
         {/* brokerage consensus */}
         {brokerageConsensus && Object.keys(brokerageConsensus).length > 0 ? (
-  <div className="space-y-4">
-    <h3 className="text-lg font-semibold">FY26 Brokerage Consensus</h3>
-    <div className="grid md:grid-cols-2 grid-cols-2 gap-4 text-muted-foreground text-sm">
-      {Object.entries(brokerageConsensus).map(([key, value]) => (
-        <div key={key} className="flex items-center space-x-1">
-          <span className="font-medium text-black">
-            {key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}:
-          </span>
-          <span>
-            {value !== undefined && value !== null ? value.toString() : "0"}
-          </span>
-        </div>
-      ))}
-    </div>
-  </div>
-) : (
-  <p className="text-muted-foreground italic">
-    No FY26 brokerage data available
-  </p>
-)}
-
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">FY26 Brokerage Consensus</h3>
+            <div className="grid md:grid-cols-2 grid-cols-2 gap-4 text-muted-foreground text-sm">
+              {Object.entries(brokerageConsensus).map(([key, value]) => (
+                <div key={key} className="flex items-center space-x-1">
+                  <span className="font-medium text-black">
+                    {key
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (l) => l.toUpperCase())}
+                    :
+                  </span>
+                  <span>
+                    {value !== undefined && value !== null
+                      ? value.toString()
+                      : "0"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-muted-foreground italic">
+            No FY26 brokerage data available
+          </p>
+        )}
       </div>
 
       {/* RIGHT: Editable Limits & Bands */}

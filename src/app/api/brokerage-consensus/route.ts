@@ -42,10 +42,10 @@ export async function GET(req: Request) {
 
     if (!projectionDoc?.brokerage_consensus?.FY26E) {
       return NextResponse.json(
-        { success: false, message: "No FY26E data found" },
-        { status: 404 }
+        { success: false, message: "No FY26E data found", FY26E: null },
+        { status: 200 } 
       )
-    }
+    }    
 
     return NextResponse.json({
       success: true,

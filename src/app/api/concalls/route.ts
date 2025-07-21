@@ -44,7 +44,7 @@ export async function GET(req: Request) {
     const projectionDoc = await Projection.findOne({ alpha_code }).lean<ProjectionType>()
 
     if (!projectionDoc?.concalls?.length) {
-      return NextResponse.json({ error: "No concalls found" }, { status: 404 })
+      return NextResponse.json({ error: "No concalls found" }, { status: 200 })
     }
 
     const filteredConcalls = projectionDoc.concalls
