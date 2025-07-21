@@ -1,0 +1,58 @@
+"use client"
+import { useState } from "react"
+import { DateSelector } from "./DateSelector"
+import { CompaniesTable } from "./CompaniesTable"
+import { CompanyInfoModal } from "./CompanyInfoModal"
+import { useUpcomingDates } from "@/hooks/useUpcomingDates"
+import { useCompaniesByDate } from "@/hooks/useCompaniesByDate"
+import { useCompanyData } from "@/hooks/useCompanyData"
+import type { Company } from "@/types/table.types"
+import { useLimits } from "@/hooks/useLimits"
+
+export default function FormScreen() {
+  const [selectedDate, setSelectedDate] = useState<string>()
+  const [selectedCo, setSelectedCo] = useState<Company | null>(null)
+
+  const { dates, loading: datesLoading } = useUpcomingDates()
+  const { companies, loading: compsLoading } = useCompaniesByDate(selectedDate)
+
+  const { limitsMap, loading: limitsLoading } = useLimits(companies)
+  const {
+    forecast,
+    splits,
+    loading: detailLoading,
+  } = useCompanyData(selectedCo?.alpha_code)
+
+  return (
+    <main className="max-w-6xl mx-auto space-y-6">
+      <h1 className="text-center text-xl font-semibold mt-4">
+        Trade‑limits form
+      </h1>
+
+      <DateSelector
+        dates={dates}
+        loading={datesLoading}
+        value={selectedDate}
+        onChange={(d) => {
+          setSelectedDate(d)
+          setSelectedCo(null)
+        }}
+      />
+
+      {compsLoading || limitsLoading ? (
+        <p className="text-sm text-muted-foreground">Loading companies…</p>
+      ) : (
+        <CompaniesTable rows={companies} onView={setSelectedCo} limits={limitsMap} />
+      )}
+
+      <CompanyInfoModal
+        open={!!selectedCo}
+        onClose={() => setSelectedCo(null)}
+        company={selectedCo}
+        forecast={forecast}
+        loading={detailLoading}
+        splits={splits}
+      />
+    </main>
+  )
+}

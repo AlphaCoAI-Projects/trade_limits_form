@@ -1,3 +1,4 @@
+"use client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Company, TableMeta } from "@/types/table.types";
@@ -88,13 +89,6 @@ export const EditCell = ({ row, table }: EditCellProps) => {
           <Edit />
         </Button>
       )}
-
-      <Input
-        type="checkbox"
-        checked={row.getIsSelected()}
-        onChange={row.getToggleSelectedHandler()}
-        className="ml-2"
-      />
     </div>
   )
 }

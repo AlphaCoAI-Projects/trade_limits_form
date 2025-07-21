@@ -1,14 +1,13 @@
 import React from "react";
-import { FormTable } from "./_components/table";
-import FormHeader from "./_components/header";
 import FormContent from "./_components/content";
+import FormScreen from "./_components/FormScreen";
 
 
 const TradeFormEditableTable = () => {
   return (
     <div className="h-auto md:m-10 m-4 flex flex-col justify-center items-center">
       <div>
-        <FormTable />
+        <FormScreen />
       </div>
       <div>
         <FormContent />

@@ -15,7 +15,7 @@ import { useUpcomingDates } from "@/hooks/useUpcomingDates"
 
 export function DropdownMenuRadio() {
   const [dateItem, setDateItem] = React.useState<string | null>(null)
-  const {dates, isLoading} = useUpcomingDates()
+  const {dates} = useUpcomingDates()
   
   const handleValueChange = (value: string) => {
     setDateItem(value)

@@ -1,36 +1,24 @@
+"use client"
 import { useEffect, useState } from "react"
+import type { Company } from "@/types/table.types"
 
-export const useCompaniesByDate = (date: string | null) => {
-  const [companies, setCompanies] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+export const useCompaniesByDate = (date?: string) => {
+  const [companies, setCompanies] = useState<Company[]>([])
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    console.log("Triggering fetch for:", date)
     if (!date) return
-
-    const fetchCompaniesByDate = async () => {
-      setIsLoading(true)
+    setLoading(true)
+    ;(async () => {
       try {
         const res = await fetch(`/api/companies-list?q=${encodeURIComponent(date)}`)
         const json = await res.json()
-
-        console.log("Fetched companies list:", json)
-
-        if (res.ok && json.success) {
-          setCompanies(json.data.list || [])
-        } else {
-          setCompanies([])
-        }
-      } catch (err) {
-        console.error("Error fetching companies:", err)
-        setCompanies([])
+        setCompanies(json.data?.list ?? [])
       } finally {
-        setIsLoading(false)
+        setLoading(false)
       }
-    }
-
-    fetchCompaniesByDate()
+    })()
   }, [date])
 
-  return { companies, isLoading }
+  return { companies, loading }
 }
