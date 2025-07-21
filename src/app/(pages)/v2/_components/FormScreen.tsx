@@ -8,6 +8,8 @@ import { useCompaniesByDate } from "@/hooks/useCompaniesByDate"
 import { useCompanyData } from "@/hooks/useCompanyData"
 import type { Company } from "@/types/table.types"
 import { useLimits } from "@/hooks/useLimits"
+import { useConcalls } from "@/hooks/useConcalls"
+import { useBrokerage } from "@/hooks/useBrokerage"
 
 export default function FormScreen() {
   const [selectedDate, setSelectedDate] = useState<string>()
@@ -22,6 +24,9 @@ export default function FormScreen() {
     splits,
     loading: detailLoading,
   } = useCompanyData(selectedCo?.alpha_code)
+
+  const { concalls, loading: concallsLoading} = useConcalls(selectedCo?.alpha_code)
+  const { brokerage, loading: brokerageLoading} = useBrokerage(selectedCo?.alpha_code)
 
   return (
     <main className="max-w-6xl mx-auto space-y-6">
@@ -52,6 +57,10 @@ export default function FormScreen() {
         forecast={forecast}
         loading={detailLoading}
         splits={splits}
+        concalls={concalls}
+        concallsLoading={concallsLoading}
+        brokerage={brokerage}
+        brokerageLoading={brokerageLoading}
       />
     </main>
   )
