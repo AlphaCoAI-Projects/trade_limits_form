@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 interface CompanyDoc extends Document {
   cid: number;
   companyname: string;
+  market_capitalization: number
   splits?: {
     sales?: number[];
     operating_profit?: number[];
@@ -19,6 +20,7 @@ interface CompanyDoc extends Document {
 const CompanySchema = new Schema<CompanyDoc>({
   cid: Number,
   companyname: String,
+  market_capitalization: Number,
   splits: {
     sales: [Number],
     operating_profit: [Number],

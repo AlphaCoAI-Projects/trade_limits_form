@@ -5,6 +5,7 @@ import Company from '@/models/Company';
 export interface CompanyData {
   cid: number;
   companyname: string;
+  market_capitalization: number
   splits?: {
     sales?: number[];
     operating_profit?: number[];
@@ -34,7 +35,7 @@ export async function GET(req: Request) {
 
     const company = await Company.findOne(
         { alpha_code },
-        { splits: 1, volatility: 1, _id: 0 }
+        { market_capitalization: 1, splits: 1, volatility: 1, _id: 0 }
       ).lean<CompanyData>();
   
       if (!company) {
@@ -47,6 +48,7 @@ export async function GET(req: Request) {
       return NextResponse.json({
         success: true,
         data: {
+          market_capitalization: company.market_capitalization || 0,
           splits: company.splits || {},
           volatility: company.volatility || {},
         },

@@ -17,6 +17,7 @@ export interface SplitsVolatilityData {
 
 export const useVolatility = (alphaCode?: string) => {
   const [volatility, setVolatility] = useState<any>(null);
+  const [marketCapitalization, setMarketCapitalization] = useState<undefined | number>(0)
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export const useVolatility = (alphaCode?: string) => {
         );
         const json = await res.json();
         if (json.success) {
+          setMarketCapitalization(json.data.market_capitalization)
           setVolatility(json.data.volatility);
         }
         
@@ -44,6 +46,7 @@ export const useVolatility = (alphaCode?: string) => {
     fetchData();
   }, [alphaCode]);
   return {
+    marketCapitalization,
     volatility,
     loading
   };

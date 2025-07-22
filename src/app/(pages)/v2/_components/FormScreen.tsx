@@ -32,7 +32,7 @@ export default function FormScreen() {
   const { brokerage, loading: brokerageLoading } = useBrokerage(
     selectedCo?.alpha_code
   );
-  const { volatility, loading: volatilityLoading } = useVolatility(
+  const { volatility, marketCapitalization, loading: volatilityLoading } = useVolatility(
     selectedCo?.alpha_code
   );
 
@@ -75,6 +75,7 @@ export default function FormScreen() {
         brokerageLoading={brokerageLoading}
         volatility={volatility}
         volatilityLoading={volatilityLoading}
+        marketCapitalization={marketCapitalization}
       />
     </main>
   );

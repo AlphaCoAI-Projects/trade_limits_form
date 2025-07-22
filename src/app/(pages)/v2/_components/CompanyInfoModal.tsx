@@ -55,6 +55,7 @@ interface Props {
     adjusted_pat?: number;
   };
   volatilityLoading: boolean;
+  marketCapitalization?: number
 }
 
 export const CompanyInfoModal = ({
@@ -70,6 +71,7 @@ export const CompanyInfoModal = ({
   brokerageLoading,
   volatility,
   volatilityLoading,
+  marketCapitalization
 }: Props) => {
   const SPLIT_KEYS = [
     { key: "sales", label: "Sales" },
@@ -221,6 +223,7 @@ export const CompanyInfoModal = ({
               </div>
 
               <div className="flex flex-col items-start justify-start flex-1">
+                <span>Market Cap: {marketCapitalization?.toFixed(2)}</span>
                 {concalls && (
                   <section>
                     <h3 className="font-bold">Concalls</h3>
