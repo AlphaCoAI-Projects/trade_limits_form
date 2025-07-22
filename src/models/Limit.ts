@@ -8,6 +8,7 @@ const LimitSchema = new Schema({
   super_lower_limit: Number,
   target_pe_lower: Number,
   target_pe_upper: Number,
+  industry_pe: Number,
 })
 
 export const Limit = models.Limit || model("Limit", LimitSchema, "limits")
