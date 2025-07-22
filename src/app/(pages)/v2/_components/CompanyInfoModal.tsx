@@ -58,7 +58,7 @@ export const CompanyInfoModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className=" overflow-auto">
+      <DialogContent className="overflow-auto">
         <DialogTitle>Company info</DialogTitle>
         <DialogDescription />
         {company ? (
@@ -68,6 +68,7 @@ export const CompanyInfoModal = ({
             </p>
 
             <div className="flex flex-row justify-between items-center gap-4">
+              <div className="flex flex-col items-center flex-1">
               {/* Forecast table */}
               {forecast.length > 0 ? (
                 <section className="flex flex-col items-center justify-center">
@@ -111,7 +112,7 @@ export const CompanyInfoModal = ({
 
               {/* Splits */}
               {splits && (
-                <section className="mt-6">
+                <section className="mt-6 w-full">
                   <h3 className="font-semibold mb-2">Splits</h3>
                   <table className="w-full text-xs border text-center">
                     <thead className="bg-muted">
@@ -143,6 +144,9 @@ export const CompanyInfoModal = ({
                   </table>
                 </section>
               )}
+              </div>
+
+              <div className="flex flex-col items-center flex-1">
 
               {concalls && (
                 <section>
@@ -173,6 +177,7 @@ export const CompanyInfoModal = ({
                   </div>
                 </section>
               )}
+              </div>
             </div>
           </>
         ) : (
