@@ -46,12 +46,12 @@ export const CompaniesTable = ({ rows, limits, onView }: Props) => {
                 <Eye className="w-4 h-4" />
               </Button>
 
-              {row.isEditing ? (
+              {row.isEditing ? 
                 <>
                   <Button
                     variant="icon"
                     size="icon"
-                    className="text-red-500"
+                    className="text-white bg-red-500"
                     onClick={() => revertRow(idx, row)}
                     title="Cancel"
                   >
@@ -60,14 +60,14 @@ export const CompaniesTable = ({ rows, limits, onView }: Props) => {
                   <Button
                     variant="icon"
                     size="icon"
-                    className="text-green-500"
+                    className="text-white bg-green-500"
                     onClick={() => toggleEdit(idx, false)}
                     title="Save"
                   >
                     <Check />
                   </Button>
                 </>
-              ) : (
+               : (
                 <Button
                   variant="icon"
                   size="icon"

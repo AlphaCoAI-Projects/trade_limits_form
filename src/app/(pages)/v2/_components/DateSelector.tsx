@@ -25,7 +25,7 @@ export const DateSelector = ({ value, dates, loading, onChange }: Props) => (
             ? new Date(value).toLocaleDateString("en-IN", {
                 weekday: "short", day: "numeric", month: "short", year: "numeric"
               })
-            : "Select Date"}
+            : `${loading ? "Fetching upcoming dates.." : "Select date"}`}
         </Button>
       </DropdownMenuTrigger>
 

@@ -224,7 +224,7 @@ export const CompanyInfoModal = ({
                 {concalls && (
                   <section>
                     <h3 className="font-bold">Concalls</h3>
-                    <p>
+                    {concallsLoading ? "Fetching concalls data.." : <p>
                       {filteredConcall?.profit_after_tax == null ||
                       splits?.splits?.net_profit?.[0] == null ? (
                         <>
@@ -249,14 +249,14 @@ export const CompanyInfoModal = ({
                           ).toFixed(2)}
                         </>
                       )}
-                    </p>
+                    </p>}
                   </section>
                 )}
 
                 {brokerage && (
                   <section>
                     <h3 className="font-bold">Brokerage</h3>
-                    <p>
+                    {brokerageLoading ? "Fetching brokerage data.." : <p>
                       {brokerage?.avg_pat == null ||
                       splits?.splits?.net_profit?.[0] == null ? (
                         <>
@@ -273,11 +273,11 @@ export const CompanyInfoModal = ({
                       ) : (
                         <>
                           PAT x Split ={" "}
-                          {Number(brokerage.avg_pat) *
-                            Number(splits.splits.net_profit[0])}
+                          {(Number(brokerage.avg_pat) *
+                            Number(splits.splits.net_profit[0])).toFixed(2)}
                         </>
                       )}
-                    </p>
+                    </p>}
                   </section>
                 )}
               </div>
