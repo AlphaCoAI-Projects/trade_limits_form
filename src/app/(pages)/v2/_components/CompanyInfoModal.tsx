@@ -229,26 +229,34 @@ export const CompanyInfoModal = ({
                     {concallsLoading ? (
                       "Fetching concalls data.."
                     ) : (
-                      <p>
-                        {filteredConcall?.profit_after_tax == null ||
-                        splits?.splits?.net_profit?.[0] == null ? (
-                          <>
-                            Value not available: PAT ={" "}
-                            {filteredConcall?.profit_after_tax ?? "undefined"},
-                            Split ={" "}
-                            {splits?.splits?.net_profit?.[0] ?? "undefined"}
-                          </>
-                        ) : isNaN(Number(filteredConcall.profit_after_tax)) ||
-                          isNaN(Number(splits.splits.net_profit[0])) ? (
-                          <>
-                            Invalid number: PAT ={" "}
-                            {filteredConcall.profit_after_tax.toFixed(2)}, Split
-                            = {splits.splits.net_profit[0]}
-                          </>
-                        ) : (
-                          <>
-                            {/* pbt * split */}
-                            <div>
+                      <>
+                        {/* <div>
+                          {filteredConcall?.profit_after_tax == null ||
+                          splits?.splits?.net_profit?.[0] == null ? (
+                            <>
+                              Value not available: PAT ={" "}
+                              {filteredConcall?.profit_after_tax ?? "undefined"}
+                              , Split ={" "}
+                              {splits?.splits?.net_profit?.[0] ?? "undefined"}
+                            </>
+                          ) : isNaN(Number(filteredConcall.profit_after_tax)) ||
+                            isNaN(Number(splits.splits.net_profit[0])) ? (
+                            <>
+                              Invalid number: PAT ={" "}
+                              {filteredConcall.profit_after_tax.toFixed(2)},
+                              Split = {splits.splits.net_profit[0]}
+                            </>
+                          ) : (
+                            <>
+                              PAT x Split ={" "}
+                              {(
+                                Number(filteredConcall.profit_after_tax) *
+                                Number(splits.splits.net_profit[0])
+                              ).toFixed(2)}
+                            </>
+                          )}
+                        </div> */}
+                                                    <div>
                               {(() => {
                                 const ebitda = Number(
                                   filteredConcall?.ebitda ?? 0
@@ -265,6 +273,10 @@ export const CompanyInfoModal = ({
                                 const splitValue = Number(
                                   splits?.splits?.net_profit?.[0] ?? 0
                                 )
+
+                                if(!ebitda|| !interest || !depreciation || !otherIncome) {
+                                  return <>Failed to calculate PBT due to insufficient values</>
+                                }
 
                                 const pbt =
                                   ebitda - interest - depreciation + otherIncome
@@ -283,18 +295,33 @@ export const CompanyInfoModal = ({
                                 )
                               })()}
                             </div>
-
-                            {/* pat * split */}
-                            <div>
+                        <div>
+                          {filteredConcall?.profit_after_tax == null ||
+                          splits?.splits?.net_profit?.[0] == null ? (
+                            <>
+                              Value not available: PAT ={" "}
+                              {filteredConcall?.profit_after_tax ?? "undefined"}
+                              , Split ={" "}
+                              {splits?.splits?.net_profit?.[0] ?? "undefined"}
+                            </>
+                          ) : isNaN(Number(filteredConcall.profit_after_tax)) ||
+                            isNaN(Number(splits.splits.net_profit[0])) ? (
+                            <>
+                              Invalid number: PAT ={" "}
+                              {filteredConcall.profit_after_tax.toFixed(2)},
+                              Split = {splits.splits.net_profit[0]}
+                            </>
+                          ) : (
+                            <>
                               PAT x Split ={" "}
                               {(
                                 Number(filteredConcall.profit_after_tax) *
                                 Number(splits.splits.net_profit[0])
                               ).toFixed(2)}
-                            </div>
-                          </>
-                        )}
-                      </p>
+                            </>
+                          )}
+                        </div>
+                      </>
                     )}
                   </section>
                 )}
@@ -305,30 +332,56 @@ export const CompanyInfoModal = ({
                     {brokerageLoading ? (
                       "Fetching brokerage data.."
                     ) : (
-                      <p>
-                        {brokerage?.avg_pat == null ||
-                        splits?.splits?.net_profit?.[0] == null ? (
-                          <>
-                            Value not available: PAT ={" "}
-                            {brokerage?.avg_pat ?? "undefined"}, Split ={" "}
-                            {splits?.splits?.net_profit?.[0] ?? "undefined"}
-                          </>
-                        ) : isNaN(Number(brokerage.avg_pat)) ||
-                          isNaN(Number(splits.splits.net_profit[0])) ? (
-                          <>
-                            Invalid number: PAT = {brokerage.avg_pat}, Split ={" "}
-                            {splits.splits.net_profit[0]}
-                          </>
-                        ) : (
-                          <>
-                            PAT x Split ={" "}
-                            {(
-                              Number(brokerage.avg_pat) *
-                              Number(splits.splits.net_profit[0])
-                            ).toFixed(2)}
-                          </>
-                        )}
-                      </p>
+                      <>
+                        <div>
+                          {brokerage?.avg_pbt == null ||
+                          splits?.splits?.net_profit?.[0] == null ? (
+                            <>
+                              Value not available: PBT ={" "}
+                              {brokerage?.avg_pbt ?? "undefined"}, Split ={" "}
+                              {splits?.splits?.net_profit?.[0] ?? "undefined"}
+                            </>
+                          ) : isNaN(Number(brokerage.avg_pbt)) ||
+                            isNaN(Number(splits.splits.net_profit[0])) ? (
+                            <>
+                              Invalid number: PBT = {brokerage.avg_pbt}, Split ={" "}
+                              {splits.splits.net_profit[0]}
+                            </>
+                          ) : (
+                            <>
+                              PBT x Split ={" "}
+                              {(
+                                Number(brokerage.avg_pbt) *
+                                Number(splits.splits.net_profit[0])
+                              ).toFixed(2)}
+                            </>
+                          )}
+                        </div>
+                        <div>
+                          {brokerage?.avg_pat == null ||
+                          splits?.splits?.net_profit?.[0] == null ? (
+                            <>
+                              Value not available: PAT ={" "}
+                              {brokerage?.avg_pat ?? "undefined"}, Split ={" "}
+                              {splits?.splits?.net_profit?.[0] ?? "undefined"}
+                            </>
+                          ) : isNaN(Number(brokerage.avg_pat)) ||
+                            isNaN(Number(splits.splits.net_profit[0])) ? (
+                            <>
+                              Invalid number: PAT = {brokerage.avg_pat}, Split ={" "}
+                              {splits.splits.net_profit[0]}
+                            </>
+                          ) : (
+                            <>
+                              PAT x Split ={" "}
+                              {(
+                                Number(brokerage.avg_pat) *
+                                Number(splits.splits.net_profit[0])
+                              ).toFixed(2)}
+                            </>
+                          )}
+                        </div>
+                      </>
                     )}
                   </section>
                 )}
