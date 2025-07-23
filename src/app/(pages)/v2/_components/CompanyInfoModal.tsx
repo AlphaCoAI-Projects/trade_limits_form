@@ -1,60 +1,61 @@
-"use client";
+"use client"
 import {
   Dialog,
   DialogContent,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { ForecastItem } from "@/hooks/useCompanyData";
-import type { Company, SplitsVolatilityData } from "@/types/table.types";
-import { useEffect, useState } from "react";
+} from "@/components/ui/dialog"
+import { ForecastItem } from "@/hooks/useCompanyData"
+import type { Company, SplitsVolatilityData } from "@/types/table.types"
+import { useEffect, useState } from "react"
 
 interface Concalls {
-  year_id: number;
-  quarter_id: string;
-  processed: string;
+  year_id: number
+  quarter_id: string
+  processed: string
   projections: {
-    [fy: string]: YearValue;
-  };
+    [fy: string]: YearValue
+  }
 }
 
 interface YearValue {
-  ebitda: number | null;
-  ebitda_margin: number | null;
-  total_revenue: number | null;
-  revenue_growth: number | null;
-  is_interest_included: boolean;
-  is_other_income_included: boolean;
-  annualized_interest: number | null;
-  annualized_depreciation: number | null;
-  other_income: number | null;
-  profit_after_tax: number | null;
+  ebitda: number | null
+  ebitda_margin: number | null
+  total_revenue: number | null
+  revenue_growth: number | null
+  is_interest_included: boolean
+  is_other_income_included: boolean
+  annualized_interest: number | null
+  annualized_depreciation: number | null
+  other_income: number | null
+  profit_after_tax: number | null
+  profit_before_tax: number | null
 }
 
 interface Props {
-  open: boolean;
-  onClose: () => void;
-  company: Company | null;
-  forecast: ForecastItem[];
-  loading: boolean;
-  splits: SplitsVolatilityData | null;
-  concalls: Concalls[];
+  open: boolean
+  onClose: () => void
+  company: Company | null
+  forecast: ForecastItem[]
+  loading: boolean
+  splits: SplitsVolatilityData | null
+  concalls: Concalls[]
   brokerage: {
-    avg_revenue?: number;
-    avg_ebitda?: number;
-    avg_pbt?: number;
-    avg_pat?: number;
-    avg_adj_pat?: number;
-  } | null;
-  concallsLoading: boolean;
-  brokerageLoading: boolean;
+    avg_revenue?: number
+    avg_ebitda?: number
+    avg_pbt?: number
+    avg_pat?: number
+    avg_adj_pat?: number
+  } | null
+  concallsLoading: boolean
+  brokerageLoading: boolean
   volatility: {
-    sales?: number;
-    operating_profit?: number;
-    adjusted_pbt?: number;
-    adjusted_pat?: number;
-  };
-  volatilityLoading: boolean;
+    sales?: number
+    operating_profit?: number
+    adjusted_pbt?: number
+    adjusted_pat?: number
+  }
+  volatilityLoading: boolean
   marketCapitalization?: number
 }
 
@@ -71,49 +72,47 @@ export const CompanyInfoModal = ({
   brokerageLoading,
   volatility,
   volatilityLoading,
-  marketCapitalization
+  marketCapitalization,
 }: Props) => {
   const SPLIT_KEYS = [
     { key: "sales", label: "Sales" },
     { key: "operating_profit", label: "Operating Profit" },
     { key: "net_profit", label: "Net Profit" },
-  ] as const;
+  ] as const
 
-  const [filteredConcall, setFilteredConcall] = useState<YearValue | null>(
-    null
-  );
+  const [filteredConcall, setFilteredConcall] = useState<YearValue | null>(null)
 
   useEffect(() => {
     if (!concalls || concalls.length === 0 || concallsLoading) {
-      setFilteredConcall(null);
-      return;
+      setFilteredConcall(null)
+      return
     }
 
-    const quarterOrder = { q1: 1, q2: 2, q3: 3, q4: 4 } as const;
+    const quarterOrder = { q1: 1, q2: 2, q3: 3, q4: 4 } as const
 
     const latest = concalls.reduce((latest, current) => {
       const latestQuarter =
-        quarterOrder[latest.quarter_id as keyof typeof quarterOrder];
+        quarterOrder[latest.quarter_id as keyof typeof quarterOrder]
       const currentQuarter =
-        quarterOrder[current.quarter_id as keyof typeof quarterOrder];
+        quarterOrder[current.quarter_id as keyof typeof quarterOrder]
 
-      if (current.year_id > latest.year_id) return current;
+      if (current.year_id > latest.year_id) return current
       if (
         current.year_id === latest.year_id &&
         currentQuarter > latestQuarter
       ) {
-        return current;
+        return current
       }
-      return latest;
-    }, concalls[0]);
+      return latest
+    }, concalls[0])
 
     if (latest?.projections?.FY26) {
-      setFilteredConcall(latest.projections.FY26);
+      setFilteredConcall(latest.projections.FY26)
     } else {
-      setFilteredConcall(null);
-      console.warn("FY26 data not found in latest projections", latest);
+      setFilteredConcall(null)
+      console.warn("FY26 data not found in latest projections", latest)
     }
-  }, [concalls, concallsLoading]);
+  }, [concalls, concallsLoading])
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -142,7 +141,7 @@ export const CompanyInfoModal = ({
                           <th className="border px-2 py-1 text-left">
                             Prediction
                           </th>
-                           <th className="border px-2 py-1 text-left">
+                          <th className="border px-2 py-1 text-left">
                             Volatility
                           </th>
                         </tr>
@@ -227,60 +226,110 @@ export const CompanyInfoModal = ({
                 {concalls && (
                   <section>
                     <h3 className="font-bold">Concalls</h3>
-                    {concallsLoading ? "Fetching concalls data.." : <p>
-                      {filteredConcall?.profit_after_tax == null ||
-                      splits?.splits?.net_profit?.[0] == null ? (
-                        <>
-                          Value not available: PAT ={" "}
-                          {filteredConcall?.profit_after_tax ?? "undefined"},
-                          Split ={" "}
-                          {splits?.splits?.net_profit?.[0] ?? "undefined"}
-                        </>
-                      ) : isNaN(Number(filteredConcall.profit_after_tax)) ||
-                        isNaN(Number(splits.splits.net_profit[0])) ? (
-                        <>
-                          Invalid number: PAT ={" "}
-                          {filteredConcall.profit_after_tax.toFixed(2)}, Split ={" "}
-                          {splits.splits.net_profit[0]}
-                        </>
-                      ) : (
-                        <>
-                          PAT x Split ={" "}
-                          {(
-                            Number(filteredConcall.profit_after_tax) *
-                            Number(splits.splits.net_profit[0])
-                          ).toFixed(2)}
-                        </>
-                      )}
-                    </p>}
+                    {concallsLoading ? (
+                      "Fetching concalls data.."
+                    ) : (
+                      <p>
+                        {filteredConcall?.profit_after_tax == null ||
+                        splits?.splits?.net_profit?.[0] == null ? (
+                          <>
+                            Value not available: PAT ={" "}
+                            {filteredConcall?.profit_after_tax ?? "undefined"},
+                            Split ={" "}
+                            {splits?.splits?.net_profit?.[0] ?? "undefined"}
+                          </>
+                        ) : isNaN(Number(filteredConcall.profit_after_tax)) ||
+                          isNaN(Number(splits.splits.net_profit[0])) ? (
+                          <>
+                            Invalid number: PAT ={" "}
+                            {filteredConcall.profit_after_tax.toFixed(2)}, Split
+                            = {splits.splits.net_profit[0]}
+                          </>
+                        ) : (
+                          <>
+                            {/* pbt * split */}
+                            <div>
+                              {(() => {
+                                const ebitda = Number(
+                                  filteredConcall?.ebitda ?? 0
+                                )
+                                const interest = Number(
+                                  filteredConcall?.annualized_interest ?? 0
+                                )
+                                const depreciation = Number(
+                                  filteredConcall?.annualized_depreciation ?? 0
+                                )
+                                const otherIncome = Number(
+                                  filteredConcall?.other_income ?? 0
+                                )
+                                const splitValue = Number(
+                                  splits?.splits?.net_profit?.[0] ?? 0
+                                )
+
+                                const pbt =
+                                  ebitda - interest - depreciation + otherIncome
+                                const pbtSplit = pbt * splitValue
+
+                                if (isNaN(pbtSplit)) {
+                                  return <>Invalid values for PBT x Split</>
+                                }
+
+                                return (
+                                  <div>
+                                    <div>
+                                      PBT x Split = {pbtSplit.toFixed(2)}
+                                    </div>
+                                  </div>
+                                )
+                              })()}
+                            </div>
+
+                            {/* pat * split */}
+                            <div>
+                              PAT x Split ={" "}
+                              {(
+                                Number(filteredConcall.profit_after_tax) *
+                                Number(splits.splits.net_profit[0])
+                              ).toFixed(2)}
+                            </div>
+                          </>
+                        )}
+                      </p>
+                    )}
                   </section>
                 )}
 
                 {brokerage && (
                   <section>
                     <h3 className="font-bold">Brokerage</h3>
-                    {brokerageLoading ? "Fetching brokerage data.." : <p>
-                      {brokerage?.avg_pat == null ||
-                      splits?.splits?.net_profit?.[0] == null ? (
-                        <>
-                          Value not available: PAT ={" "}
-                          {brokerage?.avg_pat ?? "undefined"}, Split ={" "}
-                          {splits?.splits?.net_profit?.[0] ?? "undefined"}
-                        </>
-                      ) : isNaN(Number(brokerage.avg_pat)) ||
-                        isNaN(Number(splits.splits.net_profit[0])) ? (
-                        <>
-                          Invalid number: PAT = {brokerage.avg_pat}, Split ={" "}
-                          {splits.splits.net_profit[0]}
-                        </>
-                      ) : (
-                        <>
-                          PAT x Split ={" "}
-                          {(Number(brokerage.avg_pat) *
-                            Number(splits.splits.net_profit[0])).toFixed(2)}
-                        </>
-                      )}
-                    </p>}
+                    {brokerageLoading ? (
+                      "Fetching brokerage data.."
+                    ) : (
+                      <p>
+                        {brokerage?.avg_pat == null ||
+                        splits?.splits?.net_profit?.[0] == null ? (
+                          <>
+                            Value not available: PAT ={" "}
+                            {brokerage?.avg_pat ?? "undefined"}, Split ={" "}
+                            {splits?.splits?.net_profit?.[0] ?? "undefined"}
+                          </>
+                        ) : isNaN(Number(brokerage.avg_pat)) ||
+                          isNaN(Number(splits.splits.net_profit[0])) ? (
+                          <>
+                            Invalid number: PAT = {brokerage.avg_pat}, Split ={" "}
+                            {splits.splits.net_profit[0]}
+                          </>
+                        ) : (
+                          <>
+                            PAT x Split ={" "}
+                            {(
+                              Number(brokerage.avg_pat) *
+                              Number(splits.splits.net_profit[0])
+                            ).toFixed(2)}
+                          </>
+                        )}
+                      </p>
+                    )}
                   </section>
                 )}
               </div>
@@ -291,5 +340,5 @@ export const CompanyInfoModal = ({
         )}
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}
