@@ -11,6 +11,7 @@ import { useLimits } from "@/hooks/useLimits";
 import { useConcalls } from "@/hooks/useConcalls";
 import { useBrokerage } from "@/hooks/useBrokerage";
 import { useVolatility } from "@/hooks/useVolatility";
+import { useBollingerBands } from "@/hooks/useBollingerBands";
 
 export default function FormScreen() {
   const [selectedDate, setSelectedDate] = useState<string>();
@@ -35,6 +36,15 @@ export default function FormScreen() {
   const { volatility, marketCapitalization, loading: volatilityLoading } = useVolatility(
     selectedCo?.alpha_code
   );
+
+  const {bollingerBand, loading} = useBollingerBands({
+    alphaCode: selectedCo?.alpha_code as string,
+    k: 1.6,
+    windowSize: 6
+  })
+
+  console.log("Bollinger band on formscreen", bollingerBand)
+
 
   return (
     <main className="max-w-6xl mx-auto space-y-6">

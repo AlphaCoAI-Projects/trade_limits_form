@@ -5,6 +5,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useBollingerBands } from "@/hooks/useBollingerBands"
 import { ForecastItem } from "@/hooks/useCompanyData"
 import type { Company, SplitsVolatilityData } from "@/types/table.types"
 import { useEffect, useState } from "react"
@@ -59,6 +62,16 @@ interface Props {
   marketCapitalization?: number
 }
 
+interface IBollingerFormData {
+  deviation: number | string
+  timeFrame: number | string
+}
+
+const EMPTY_BOLLINGER_FORM: IBollingerFormData = {
+  deviation: "",
+  timeFrame: ""
+}
+
 export const CompanyInfoModal = ({
   open,
   onClose,
@@ -81,6 +94,7 @@ export const CompanyInfoModal = ({
   ] as const
 
   const [filteredConcall, setFilteredConcall] = useState<YearValue | null>(null)
+  const [bollingerFormData, setBollingerFormData] = useState<IBollingerFormData>(EMPTY_BOLLINGER_FORM)
 
   useEffect(() => {
     if (!concalls || concalls.length === 0 || concallsLoading) {
@@ -114,6 +128,21 @@ export const CompanyInfoModal = ({
     }
   }, [concalls, concallsLoading])
 
+  const { bollingerBand, loading: bollingerLoading } = useBollingerBands({
+    alphaCode: company?.alpha_code ?? "",
+    k: Number(bollingerFormData.deviation) || 0,
+    windowSize: Number(bollingerFormData.timeFrame as string) || 0,
+  })
+  
+
+  const handleBollingerInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setBollingerFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="overflow-auto">
@@ -126,6 +155,7 @@ export const CompanyInfoModal = ({
             </p>
 
             <div className="flex flex-row justify-between items-center gap-4">
+              {/* Start of left side of the modal */}
               <div className="flex flex-col items-center flex-1">
                 {/* Forecast table */}
                 {forecast.length > 0 ? (
@@ -220,7 +250,9 @@ export const CompanyInfoModal = ({
                   </section>
                 )}
               </div>
+              {/* End of left side of the modal  */}
 
+              {/* Start of right side of the modal */}
               <div className="flex flex-col items-start justify-start flex-1">
                 <span>Market Cap: {marketCapitalization?.toFixed(2)}</span>
                 {concalls && (
@@ -230,71 +262,51 @@ export const CompanyInfoModal = ({
                       "Fetching concalls data.."
                     ) : (
                       <>
-                        {/* <div>
-                          {filteredConcall?.profit_after_tax == null ||
-                          splits?.splits?.net_profit?.[0] == null ? (
-                            <>
-                              Value not available: PAT ={" "}
-                              {filteredConcall?.profit_after_tax ?? "undefined"}
-                              , Split ={" "}
-                              {splits?.splits?.net_profit?.[0] ?? "undefined"}
-                            </>
-                          ) : isNaN(Number(filteredConcall.profit_after_tax)) ||
-                            isNaN(Number(splits.splits.net_profit[0])) ? (
-                            <>
-                              Invalid number: PAT ={" "}
-                              {filteredConcall.profit_after_tax.toFixed(2)},
-                              Split = {splits.splits.net_profit[0]}
-                            </>
-                          ) : (
-                            <>
-                              PAT x Split ={" "}
-                              {(
-                                Number(filteredConcall.profit_after_tax) *
-                                Number(splits.splits.net_profit[0])
-                              ).toFixed(2)}
-                            </>
-                          )}
-                        </div> */}
-                                                    <div>
-                              {(() => {
-                                const ebitda = Number(
-                                  filteredConcall?.ebitda ?? 0
-                                )
-                                const interest = Number(
-                                  filteredConcall?.annualized_interest ?? 0
-                                )
-                                const depreciation = Number(
-                                  filteredConcall?.annualized_depreciation ?? 0
-                                )
-                                const otherIncome = Number(
-                                  filteredConcall?.other_income ?? 0
-                                )
-                                const splitValue = Number(
-                                  splits?.splits?.net_profit?.[0] ?? 0
-                                )
+                        <div>
+                          {(() => {
+                            const ebitda = Number(filteredConcall?.ebitda ?? 0)
+                            const interest = Number(
+                              filteredConcall?.annualized_interest ?? 0
+                            )
+                            const depreciation = Number(
+                              filteredConcall?.annualized_depreciation ?? 0
+                            )
+                            const otherIncome = Number(
+                              filteredConcall?.other_income ?? 0
+                            )
+                            const splitValue = Number(
+                              splits?.splits?.net_profit?.[0] ?? 0
+                            )
 
-                                if(!ebitda|| !interest || !depreciation || !otherIncome) {
-                                  return <>Failed to calculate PBT due to insufficient values</>
-                                }
+                            if (
+                              !ebitda ||
+                              !interest ||
+                              !depreciation ||
+                              !otherIncome
+                            ) {
+                              return (
+                                <>
+                                  Failed to calculate PBT due to insufficient
+                                  values
+                                </>
+                              )
+                            }
 
-                                const pbt =
-                                  ebitda - interest - depreciation + otherIncome
-                                const pbtSplit = pbt * splitValue
+                            const pbt =
+                              ebitda - interest - depreciation + otherIncome
+                            const pbtSplit = pbt * splitValue
 
-                                if (isNaN(pbtSplit)) {
-                                  return <>Invalid values for PBT x Split</>
-                                }
+                            if (isNaN(pbtSplit)) {
+                              return <>Invalid values for PBT x Split</>
+                            }
 
-                                return (
-                                  <div>
-                                    <div>
-                                      PBT x Split = {pbtSplit.toFixed(2)}
-                                    </div>
-                                  </div>
-                                )
-                              })()}
-                            </div>
+                            return (
+                              <div>
+                                <div>PBT x Split = {pbtSplit.toFixed(2)}</div>
+                              </div>
+                            )
+                          })()}
+                        </div>
                         <div>
                           {filteredConcall?.profit_after_tax == null ||
                           splits?.splits?.net_profit?.[0] == null ? (
@@ -385,7 +397,77 @@ export const CompanyInfoModal = ({
                     )}
                   </section>
                 )}
+
+<div className="grid grid-cols-2 gap-4 mt-4">
+  <div>
+    <Label htmlFor="deviation">Deviation</Label>
+    <Input
+      id="deviation"
+      name="deviation"
+      type="number"
+      value={bollingerFormData.deviation}
+      onChange={handleBollingerInputChange}
+      placeholder="e.g. 1.5"
+    />
+  </div>
+
+  <div>
+    <Label htmlFor="timeFrame">Time Frame</Label>
+    <Input
+      id="timeFrame"
+      name="timeFrame"
+      type="number"
+      value={bollingerFormData.timeFrame}
+      onChange={handleBollingerInputChange}
+      placeholder="e.g. 6"
+    />
+  </div>
+</div>
+
+{bollingerLoading && <div className="mt-2 text-sm text-green-600">Loading...</div>}
+
+{!bollingerLoading && !bollingerBand && (
+  <div className="mt-2 text-sm">No Bollinger data available.</div>
+)}
+
+
+{bollingerBand && (
+  <div className="w-full mt-4">
+    <h3 className="font-semibold mb-2">Latest Bollinger Band</h3>
+    <table className="w-full text-sm border text-left">
+      <thead className="bg-muted">
+        <tr>
+          <th className="border px-2 py-1">Alpha Code</th>
+          <th className="border px-2 py-1">Date</th>
+          <th className="border px-2 py-1">SMA</th>
+          <th className="border px-2 py-1">Upper Band</th>
+          <th className="border px-2 py-1">Lower Band</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td className="border px-2 py-1">{bollingerBand.alpha_code}</td>
+          <td className="border px-2 py-1">
+            {new Date(bollingerBand?.calculation_date).toLocaleDateString() ?? "N/A"}
+          </td>
+          <td className="border px-2 py-1">
+            {bollingerBand?.pricesales_sma?.toFixed(2) ?? "N/A"}
+          </td>
+          <td className="border px-2 py-1">
+            {bollingerBand?.pricesales_upper_band?.toFixed(2) ?? "N/A"}
+          </td>
+          <td className="border px-2 py-1">
+            {bollingerBand?.pricesales_lower_band?.toFixed(2) ?? "N/A"}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+)}
+
+
               </div>
+              {/* End of right side of the modal */}
             </div>
           </>
         ) : (
