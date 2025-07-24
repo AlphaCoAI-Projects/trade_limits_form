@@ -22,6 +22,7 @@ export const useBollingerBands = ({ alphaCode, k, windowSize }: Props) => {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!alphaCode||!k||!windowSize|| windowSize == 0) return
       setLoading(true)
       try {
         const response = await fetch(

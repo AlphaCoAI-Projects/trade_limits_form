@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const response = await fetch(
-      `http://127.0.0.1:8000/bollinger?alpha_code=${alphaCode}&k=${k}&window_size=${windowSize}`,
+      `https://screener-backend.alphaco.ai/bollinger?alpha_code=${alphaCode}&k=${k}&window_size=${windowSize}`,
       {
         headers: {
           "x-secret-key": process.env.FORECASTER_SECRET_KEY!,
