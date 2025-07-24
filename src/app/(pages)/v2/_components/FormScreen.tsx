@@ -36,16 +36,7 @@ export default function FormScreen() {
   const { volatility, marketCapitalization, loading: volatilityLoading } = useVolatility(
     selectedCo?.alpha_code
   );
-
-  const {bollingerBand, loading} = useBollingerBands({
-    alphaCode: selectedCo?.alpha_code as string,
-    k: 1.6,
-    windowSize: 6
-  })
-
-  console.log("Bollinger band on formscreen", bollingerBand)
-
-
+  
   return (
     <main className="max-w-6xl mx-auto space-y-6">
       <h1 className="text-center text-xl font-semibold mt-4">
