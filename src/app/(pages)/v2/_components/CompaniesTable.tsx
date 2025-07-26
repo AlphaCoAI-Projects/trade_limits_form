@@ -22,7 +22,10 @@ const limitKeys: (keyof Limits)[] = [
 ]
 
 export const CompaniesTable = ({ rows, limits, onView }: Props) => {
-  const { data, toggleEdit, updateField, revertRow } = useEditableTable(rows, limits)
+  const { data, toggleEdit, updateField, revertRow } = useEditableTable(
+    rows,
+    limits
+  )
 
   return (
     <div className=" border rounded">
@@ -31,8 +34,18 @@ export const CompaniesTable = ({ rows, limits, onView }: Props) => {
           <tr>
             <th className="border px-2 py-1 text-left bg-gray-50">Company</th>
             <th className="border px-2 py-1 bg-gray-50">Actions</th>
-            {["Upper Limit", "Lower Limit", "Super Upper Limit", "Super Lower Limit", "Target Pe Lower", "Target Pe Upper", "Industry PE"].map((t) => (
-              <th key={t} className="border px-2 py-1 bg-gray-50">{t}</th>
+            {[
+              "Upper Limit",
+              "Lower Limit",
+              "Super Upper Limit",
+              "Super Lower Limit",
+              "Target Pe Lower",
+              "Target Pe Upper",
+              "Industry PE",
+            ].map((t) => (
+              <th key={t} className="border px-2 py-1 bg-gray-50">
+                {t}
+              </th>
             ))}
           </tr>
         </thead>
@@ -44,7 +57,11 @@ export const CompaniesTable = ({ rows, limits, onView }: Props) => {
 
               <td className="border-b px-2 py-1">
                 <div className="flex items-center gap-2 justify-center">
-                  <Button variant="icon" size="icon" onClick={() => onView(row)}>
+                  <Button
+                    variant="icon"
+                    size="icon"
+                    onClick={() => onView(row)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
 

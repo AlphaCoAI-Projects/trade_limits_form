@@ -36,7 +36,17 @@ export default function FormScreen() {
   const { volatility, marketCapitalization, loading: volatilityLoading } = useVolatility(
     selectedCo?.alpha_code
   );
-  
+
+const getFilteredDates = (dates: string[]) => {
+  const today = new Date();
+  return dates.filter(dateStr => {
+    const date = new Date(dateStr);
+    const diffDays = Math.round((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays >= -4 && diffDays <= 5;
+  });
+};
+
+
   return (
     <main className="max-w-6xl mx-auto space-y-6">
       <h1 className="text-center text-xl font-semibold mt-4">
@@ -44,7 +54,7 @@ export default function FormScreen() {
       </h1>
 
       <DateSelector
-        dates={dates}
+        dates={getFilteredDates(dates)}
         loading={datesLoading}
         value={selectedDate}
         onChange={(d) => {
