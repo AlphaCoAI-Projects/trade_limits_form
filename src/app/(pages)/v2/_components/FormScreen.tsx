@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DateSelector } from "./DateSelector";
 import { CompaniesTable } from "./CompaniesTable";
 import { CompanyInfoModal } from "./CompanyInfoModal";
@@ -12,6 +12,7 @@ import { useConcalls } from "@/hooks/useConcalls";
 import { useBrokerage } from "@/hooks/useBrokerage";
 import { useVolatility } from "@/hooks/useVolatility";
 import { useBollingerBands } from "@/hooks/useBollingerBands";
+import { useMarketCap } from "@/hooks/useMarketCap";
 
 export default function FormScreen() {
   const [selectedDate, setSelectedDate] = useState<string>();
@@ -36,6 +37,10 @@ export default function FormScreen() {
   const { volatility, marketCapitalization, loading: volatilityLoading } = useVolatility(
     selectedCo?.alpha_code
   );
+
+  const {marketCap, loading: marketCapLoading} = useMarketCap(selectedCo?.alpha_code)
+
+  const mCapValue = useMemo(() => marketCap?.market_cap, [marketCap]);
 
 const getFilteredDates = (dates: string[]) => {
   const today = new Date();
@@ -87,6 +92,8 @@ const getFilteredDates = (dates: string[]) => {
         volatility={volatility}
         volatilityLoading={volatilityLoading}
         marketCapitalization={marketCapitalization}
+        mCapFromGroww={mCapValue}
+        mCapFromGrowwLoading={marketCapLoading}
       />
     </main>
   );

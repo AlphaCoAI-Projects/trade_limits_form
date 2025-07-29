@@ -6,6 +6,10 @@ interface IBollingerBand {
   pricesales_lower_band: number
   pricesales_sma: number
   pricesales_upper_band: number
+  adj_pbt_to_e_sma: number
+  adj_pbt_to_e_upper_band: number
+  adj_pbt_to_e_lower_band: number
+  adj_pbt_to_e_cov: number
 }
 
 interface Props {
