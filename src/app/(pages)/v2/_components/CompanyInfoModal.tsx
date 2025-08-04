@@ -1,4 +1,5 @@
 "use client"
+import { CommonTable } from "@/components/gui/Table"
 import {
   Dialog,
   DialogContent,
@@ -9,31 +10,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useBollingerBands } from "@/hooks/useBollingerBands"
 import { ForecastItem } from "@/hooks/useCompanyData"
+import { EMPTY_BOLLINGER_FORM, IBollingerFormData } from "@/types/bollinger.types"
+import { Concalls, YearValue } from "@/types/concalls.types"
 import type { Company, SplitsVolatilityData } from "@/types/table.types"
 import { useEffect, useState } from "react"
-
-interface Concalls {
-  year_id: number
-  quarter_id: string
-  processed: string
-  projections: {
-    [fy: string]: YearValue
-  }
-}
-
-interface YearValue {
-  ebitda: number | null
-  ebitda_margin: number | null
-  total_revenue: number | null
-  revenue_growth: number | null
-  is_interest_included: boolean
-  is_other_income_included: boolean
-  annualized_interest: number | null
-  annualized_depreciation: number | null
-  other_income: number | null
-  profit_after_tax: number | null
-  profit_before_tax: number | null
-}
 
 interface Props {
   open: boolean
@@ -62,16 +42,6 @@ interface Props {
   marketCapitalization?: number
   mCapFromGroww?: number
   mCapFromGrowwLoading?: boolean
-}
-
-interface IBollingerFormData {
-  deviation: number | string
-  timeFrame: number | string
-}
-
-const EMPTY_BOLLINGER_FORM: IBollingerFormData = {
-  deviation: "",
-  timeFrame: "",
 }
 
 export const CompanyInfoModal = ({
@@ -167,54 +137,44 @@ export const CompanyInfoModal = ({
                 {forecast.length > 0 ? (
                   <section className="flex flex-col items-center justify-center w-full">
                     <h3 className="font-semibold mb-2">Quarterly forecast</h3>
-                    <table className="w-full text-sm border">
-                      <thead className="bg-muted">
-                        <tr>
-                          <th className="border px-2 py-1 text-left">
-                            Line item
-                          </th>
-                          <th className="border px-2 py-1 text-left">Type</th>
-                          <th className="border px-2 py-1 text-left">
-                            Prediction
-                          </th>
-                          <th className="border px-2 py-1 text-left">
-                            Volatility
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {forecast
-                          ?.filter(
-                            (f) =>
-                              ![
-                                "profit_after_tax",
-                                "profit_before_tax",
-                              ].includes(f.line_item)
+                    <CommonTable
+                      data={forecast.filter(
+                        (f) =>
+                          !["profit_after_tax", "profit_before_tax"].includes(
+                            f.line_item
                           )
-                          .map((f, i) => (
-                            <tr key={i}>
-                              <td className="border px-2 py-1 capitalize">
-                                {f.line_item.replace(/_/g, " ")}
-                              </td>
-                              <td className="border px-2 py-1">
-                                {f.move_back_by === 0 ? "YOY" : "Q ‑ 1"}
-                              </td>
-                              <td className="border px-2 py-1 font-medium">
-                                {loading
-                                  ? "Fetching.."
-                                  : !f?.prediction
-                                  ? "No prediction available"
-                                  : f?.prediction?.toFixed(2)}
-                              </td>
-                              <td className="border px-2 py-1 font-medium">
-                                {volatility?.[
-                                  f.line_item as keyof typeof volatility
-                                ]?.toFixed(2) ?? "N/A"}
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
+                      )}
+                      loading={loading}
+                      columns={[
+                        {
+                          key: "line_item",
+                          label: "Line item",
+                          render: (f) => f.line_item.replace(/_/g, " "),
+                        },
+                        {
+                          key: "move_back_by",
+                          label: "Type",
+                          render: (f) =>
+                            f.move_back_by === 0 ? "YOY" : "Q - 1",
+                        },
+                        {
+                          key: "prediction",
+                          label: "Prediction",
+                          render: (f) =>
+                            !f.prediction
+                              ? "No prediction available"
+                              : f.prediction.toFixed(2),
+                        },
+                        {
+                          key: "volatility",
+                          label: "Volatility",
+                          render: (f) =>
+                            volatility?.[
+                              f.line_item as keyof typeof volatility
+                            ]?.toFixed(2) ?? "N/A",
+                        },
+                      ]}
+                    />
                   </section>
                 ) : (
                   "Fetching data.."
@@ -224,35 +184,26 @@ export const CompanyInfoModal = ({
                 {splits && (
                   <section className="mt-6 w-full">
                     <h3 className="font-semibold mb-2">Splits</h3>
-                    <table className="w-full text-xs border text-center">
-                      <thead className="bg-muted">
-                        <tr>
-                          <th className="border px-2 py-1 text-left">Metric</th>
-                          {["Q1", "Q2", "Q3", "Q4"].map((q) => (
-                            <th key={q} className="border px-2 py-1">
-                              {q}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {SPLIT_KEYS.map(({ key, label }) => (
-                          <tr key={key}>
-                            <td className="border px-2 py-1 text-left">
-                              {label}
-                            </td>
-                            {[0, 1, 2, 3].map((i) => (
-                              <td key={i} className="border px-2 py-1">
-                                {loading
-                                  ? "Fetching..."
-                                  : splits?.splits?.[key]?.[i]?.toFixed(2) ??
-                                    "—"}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <CommonTable
+                      data={[...SPLIT_KEYS]}
+                      columns={[
+                        {
+                          key: "label",
+                          label: "Metric",
+                        },
+                        ...["Q1", "Q2", "Q3", "Q4"].map((q, i) => ({
+                          key: `q${i}`,
+                          label: q,
+                          render: (row: any) =>
+                            loading
+                              ? "Fetching..."
+                              : splits.splits?.[
+                                  row.key as keyof typeof splits.splits
+                                ]?.[i]?.toFixed(2) ?? "—",
+                        })),
+                      ]}
+                      className="w-full text-xs border text-center"
+                    />
                   </section>
                 )}
               </div>
@@ -452,78 +403,72 @@ export const CompanyInfoModal = ({
                     </h3>
 
                     {/* Main Table with Core Metrics */}
-                    <table className="w-full text-sm border text-left">
-                      <thead className="bg-muted">
-                        <tr>
-                          <th className="border px-2 py-1">Alpha Code</th>
-                          <th className="border px-2 py-1">Date</th>
-                          <th className="border px-2 py-1">SMA</th>
-                          <th className="border px-2 py-1">Upper Band</th>
-                          <th className="border px-2 py-1">Lower Band</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="border px-2 py-1">
-                            {bollingerBand.alpha_code}
-                          </td>
-                          <td className="border px-2 py-1">
-                            {new Date(
-                              bollingerBand?.calculation_date
-                            ).toLocaleDateString() ?? "N/A"}
-                          </td>
-                          <td className="border px-2 py-1">
-                            {bollingerBand?.pricesales_sma?.toFixed(2) ?? "N/A"}
-                          </td>
-                          <td className="border px-2 py-1">
-                            {bollingerBand?.pricesales_upper_band?.toFixed(2) ??
-                              "N/A"}
-                          </td>
-                          <td className="border px-2 py-1">
-                            {bollingerBand?.pricesales_lower_band?.toFixed(2) ??
-                              "N/A"}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                    <CommonTable
+                      data={[bollingerBand]}
+                      columns={[
+                        { key: "alpha_code", label: "Alpha Code" },
+                        {
+                          key: "calculation_date",
+                          label: "Date",
+                          render: (row) =>
+                            new Date(row.calculation_date).toLocaleDateString(),
+                        },
+                        {
+                          key: "pricesales_sma",
+                          label: "SMA",
+                          render: (row) =>
+                            row.pricesales_sma?.toFixed(2) ?? "N/A",
+                        },
+                        {
+                          key: "pricesales_upper_band",
+                          label: "Upper Band",
+                          render: (row) =>
+                            row.pricesales_upper_band?.toFixed(2) ?? "N/A",
+                        },
+                        {
+                          key: "pricesales_lower_band",
+                          label: "Lower Band",
+                          render: (row) =>
+                            row.pricesales_lower_band?.toFixed(2) ?? "N/A",
+                        },
+                      ]}
+                    />
 
                     {/* Adj PBT Related Data */}
                     <div className="mt-4">
                       <h4 className="font-semibold mb-2">
                         Adjusted PBT Metrics
                       </h4>
-                      <table className="w-full text-sm border text-left">
-                        <thead className="bg-muted">
-                          <tr>
-                            <th className="border px-2 py-1">Adj PBT SMA</th>
-                            <th className="border px-2 py-1">Upper Band</th>
-                            <th className="border px-2 py-1">Lower Band</th>
-                            <th className="border px-2 py-1">COV</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td className="border px-2 py-1">
-                              {bollingerBand?.adj_pbt_to_e_sma?.toFixed(2) ??
-                                "N/A"}
-                            </td>
-                            <td className="border px-2 py-1">
-                              {bollingerBand?.adj_pbt_to_e_upper_band?.toFixed(
-                                2
-                              ) ?? "N/A"}
-                            </td>
-                            <td className="border px-2 py-1">
-                              {bollingerBand?.adj_pbt_to_e_lower_band?.toFixed(
-                                2
-                              ) ?? "N/A"}
-                            </td>
-                            <td className="border px-2 py-1">
-                              {bollingerBand?.adj_pbt_to_e_cov?.toFixed(2) ??
-                                "N/A"}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+
+                      <CommonTable
+                        data={[bollingerBand]}
+                        columns={[
+                          {
+                            key: "adj_pbt_to_e_sma",
+                            label: "Adj PBT SMA",
+                            render: (row) =>
+                              row.adj_pbt_to_e_sma?.toFixed(2) ?? "N/A",
+                          },
+                          {
+                            key: "adj_pbt_to_e_upper_band",
+                            label: "Upper Band",
+                            render: (row) =>
+                              row.adj_pbt_to_e_upper_band?.toFixed(2) ?? "N/A",
+                          },
+                          {
+                            key: "adj_pbt_to_e_lower_band",
+                            label: "Lower Band",
+                            render: (row) =>
+                              row.adj_pbt_to_e_lower_band?.toFixed(2) ?? "N/A",
+                          },
+                          {
+                            key: "adj_pbt_to_e_cov",
+                            label: "COV",
+                            render: (row) =>
+                              row.adj_pbt_to_e_cov?.toFixed(2) ?? "N/A",
+                          },
+                        ]}
+                      />
                     </div>
                   </div>
                 )}
