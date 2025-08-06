@@ -75,7 +75,7 @@ export const CompanyInfoModal = ({
   ]
 
   // Default keys to show
-  const defaultSelectedKeys = ["calculation_date"]
+  const defaultSelectedKeys = ["calculation_date", "pricesales"]
 
   const SPLIT_KEYS = [
     { key: "sales", label: "Sales" },
