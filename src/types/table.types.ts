@@ -27,12 +27,19 @@ export interface SplitsVolatilityData {
     sales?: number[]
     operating_profit?: number[]
     net_profit?: number[]
+    adjusted_pbt?: number[]
   }
   volatility: {
     sales?: number
     operating_profit?: number
     adjusted_pbt?: number
     adjusted_pat?: number
+  }
+  splits_volatility: {
+    sales?: number[];
+    operating_profit?: number[];
+    net_profit?: number[];
+    adjusted_pbt?: number[];
   }
 }
 

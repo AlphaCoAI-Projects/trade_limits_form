@@ -6,6 +6,7 @@ export interface ForecastItem {
   line_item: string
   move_back_by: number
   prediction: number
+  coeff_of_variation: number
 }
 
 export const useCompanyData = (alphaCode?: string) => {

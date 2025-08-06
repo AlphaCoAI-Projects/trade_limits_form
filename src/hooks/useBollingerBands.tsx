@@ -10,6 +10,12 @@ interface IBollingerBand {
   adj_pbt_to_e_upper_band: number
   adj_pbt_to_e_lower_band: number
   adj_pbt_to_e_cov: number
+  pebitda_sma: number
+  pebitda_upper_band: number
+  pebitda_lower_band: number
+  p_to_e_sma: number
+  p_to_e_upper_band: number
+  p_to_e_lower_band: number
 }
 
 interface Props {
@@ -26,7 +32,7 @@ export const useBollingerBands = ({ alphaCode, k, windowSize }: Props) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!alphaCode||!k||!windowSize|| windowSize == 0) return
+      if (!alphaCode || !k || !windowSize || windowSize == 0) return
       setLoading(true)
       try {
         const response = await fetch(

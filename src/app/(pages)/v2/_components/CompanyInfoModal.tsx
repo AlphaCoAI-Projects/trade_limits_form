@@ -1,5 +1,7 @@
 "use client"
 import { CommonTable } from "@/components/gui/Table"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -10,7 +12,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useBollingerBands } from "@/hooks/useBollingerBands"
 import { ForecastItem } from "@/hooks/useCompanyData"
-import { EMPTY_BOLLINGER_FORM, IBollingerFormData } from "@/types/bollinger.types"
+import {
+  EMPTY_BOLLINGER_FORM,
+  IBollingerFormData,
+} from "@/types/bollinger.types"
 import { Concalls, YearValue } from "@/types/concalls.types"
 import type { Company, SplitsVolatilityData } from "@/types/table.types"
 import { useEffect, useState } from "react"
@@ -61,15 +66,81 @@ export const CompanyInfoModal = ({
   mCapFromGroww,
   mCapFromGrowwLoading,
 }: Props) => {
+  const ALL_COLUMNS = [
+    { key: "calculation_date", label: "Date" },
+    { key: "pricesales", label: "Pricesales" },
+    { key: "adj_pbt_to_e", label: "Adj PBT" },
+    { key: "p_to_e", label: "P to E" },
+    { key: "pebitda", label: "P Ebitda" },
+  ]
+
+  // Default keys to show
+  const defaultSelectedKeys = ["calculation_date"]
+
   const SPLIT_KEYS = [
     { key: "sales", label: "Sales" },
     { key: "operating_profit", label: "Operating Profit" },
     { key: "net_profit", label: "Net Profit" },
+    { key: "adjusted_pbt", label: "Adj PBT" },
   ] as const
 
   const [filteredConcall, setFilteredConcall] = useState<YearValue | null>(null)
   const [bollingerFormData, setBollingerFormData] =
     useState<IBollingerFormData>(EMPTY_BOLLINGER_FORM)
+
+  // start of bollinger states and functions
+  const [visibleKeys, setVisibleKeys] = useState(defaultSelectedKeys)
+
+  const selectedColumns = ALL_COLUMNS.filter((col) =>
+    visibleKeys.includes(col.key)
+  ).flatMap((col) => {
+    const baseRender = (key: any) => (row: any) =>
+      row[key] !== undefined ? row[key]?.toFixed?.(2) ?? row[key] : "N/A"
+
+    if (col.key === "calculation_date") {
+      return [
+        {
+          ...col,
+          render: (row: any) =>
+            row.calculation_date
+              ? new Date(row.calculation_date).toLocaleDateString()
+              : "N/A",
+        },
+      ]
+    }
+
+    // Generate SMA, Lower Band, and Upper Band versions of each column
+    const suffixes = ["_sma", "_lower_band", "_upper_band"]
+    return suffixes.map((suffix) => {
+      const key = col.key + suffix
+      const label = `${col.label || col.key} ${suffix
+        .replace("_", " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase())}`
+      return {
+        ...col,
+        key,
+        label,
+        render: baseRender(key),
+      }
+    })
+  })
+
+  const handleSelectAll = () => {
+    const allKeys = ALL_COLUMNS.filter(
+      (col) => col.key !== "calculation_date"
+    ).map((col) => col.key)
+
+    const allSelected = allKeys.every((key) => visibleKeys.includes(key))
+
+    // Toggle: If all selected, remove all (except "calculation_date"), else add all
+    if (allSelected) {
+      setVisibleKeys(["calculation_date"])
+    } else {
+      setVisibleKeys(["calculation_date", ...allKeys])
+    }
+  }
+
+  // end of bollinger states and funcs
 
   useEffect(() => {
     if (!concalls || concalls.length === 0 || concallsLoading) {
@@ -149,13 +220,20 @@ export const CompanyInfoModal = ({
                         {
                           key: "line_item",
                           label: "Line item",
-                          render: (f) => f.line_item.replace(/_/g, " "),
+                          render: (f) =>
+                            f.line_item
+                              .replace(/_/g, " ")
+                              .charAt(0)
+                              .toUpperCase() +
+                            f.line_item.replace(/_/g, " ").slice(1),
                         },
                         {
                           key: "move_back_by",
                           label: "Type",
                           render: (f) =>
-                            f.move_back_by === 0 ? "YOY" : "Q - 1",
+                            f.move_back_by === 0
+                              ? "YOY"
+                              : `Q - ${f.move_back_by}`,
                         },
                         {
                           key: "prediction",
@@ -166,12 +244,13 @@ export const CompanyInfoModal = ({
                               : f.prediction.toFixed(2),
                         },
                         {
-                          key: "volatility",
-                          label: "Volatility",
+                          key: "coeff_of_variation",
+                          label: "COV",
                           render: (f) =>
-                            volatility?.[
-                              f.line_item as keyof typeof volatility
-                            ]?.toFixed(2) ?? "N/A",
+                            f.coeff_of_variation === null ||
+                            f.coeff_of_variation === undefined
+                              ? "No prediction available"
+                              : f.coeff_of_variation.toFixed(2),
                         },
                       ]}
                     />
@@ -191,16 +270,28 @@ export const CompanyInfoModal = ({
                           key: "label",
                           label: "Metric",
                         },
-                        ...["Q1", "Q2", "Q3", "Q4"].map((q, i) => ({
-                          key: `q${i}`,
-                          label: q,
-                          render: (row: any) =>
-                            loading
-                              ? "Fetching..."
-                              : splits.splits?.[
-                                  row.key as keyof typeof splits.splits
-                                ]?.[i]?.toFixed(2) ?? "—",
-                        })),
+                        ...["Q1", "Q2", "Q3", "Q4"].flatMap((q, i) => [
+                          {
+                            key: `split_${i}`,
+                            label: `${q} Split`,
+                            render: (row: any) =>
+                              loading
+                                ? "Fetching..."
+                                : splits?.splits?.[
+                                    row.key as keyof typeof splits.splits
+                                  ]?.[i]?.toFixed(2) ?? "—",
+                          },
+                          {
+                            key: `vola_${i}`,
+                            label: `${q} Volatility`,
+                            render: (row: any) =>
+                              loading
+                                ? "Fetching..."
+                                : splits?.splits_volatility?.[
+                                    row.key as keyof typeof splits.splits_volatility
+                                  ]?.[i]?.toFixed(4) ?? "—",
+                          },
+                        ]),
                       ]}
                       className="w-full text-xs border text-center"
                     />
@@ -210,7 +301,7 @@ export const CompanyInfoModal = ({
               {/* End of left side of the modal  */}
 
               {/* Start of right side of the modal */}
-              <div className="flex flex-col items-start justify-start flex-1">
+              <div className="flex flex-col items-start justify-start flex-1 ">
                 <span>
                   Market Cap:{" "}
                   {mCapFromGrowwLoading
@@ -360,6 +451,7 @@ export const CompanyInfoModal = ({
                   </section>
                 )}
 
+                {/* bollinger starts */}
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
                     <Label htmlFor="deviation">Deviation</Label>
@@ -395,83 +487,61 @@ export const CompanyInfoModal = ({
                     No Bollinger data available.
                   </div>
                 )}
-
-                {bollingerBand && (
-                  <div className="w-full mt-4">
-                    <h3 className="font-semibold mb-2">
-                      Latest Bollinger Band
-                    </h3>
-
-                    {/* Main Table with Core Metrics */}
-                    <CommonTable
-                      data={[bollingerBand]}
-                      columns={[
-                        { key: "alpha_code", label: "Alpha Code" },
-                        {
-                          key: "calculation_date",
-                          label: "Date",
-                          render: (row) =>
-                            new Date(row.calculation_date).toLocaleDateString(),
-                        },
-                        {
-                          key: "pricesales_sma",
-                          label: "SMA",
-                          render: (row) =>
-                            row.pricesales_sma?.toFixed(2) ?? "N/A",
-                        },
-                        {
-                          key: "pricesales_upper_band",
-                          label: "Upper Band",
-                          render: (row) =>
-                            row.pricesales_upper_band?.toFixed(2) ?? "N/A",
-                        },
-                        {
-                          key: "pricesales_lower_band",
-                          label: "Lower Band",
-                          render: (row) =>
-                            row.pricesales_lower_band?.toFixed(2) ?? "N/A",
-                        },
-                      ]}
-                    />
-
-                    {/* Adj PBT Related Data */}
-                    <div className="mt-4">
-                      <h4 className="font-semibold mb-2">
-                        Adjusted PBT Metrics
-                      </h4>
-
-                      <CommonTable
-                        data={[bollingerBand]}
-                        columns={[
-                          {
-                            key: "adj_pbt_to_e_sma",
-                            label: "Adj PBT SMA",
-                            render: (row) =>
-                              row.adj_pbt_to_e_sma?.toFixed(2) ?? "N/A",
-                          },
-                          {
-                            key: "adj_pbt_to_e_upper_band",
-                            label: "Upper Band",
-                            render: (row) =>
-                              row.adj_pbt_to_e_upper_band?.toFixed(2) ?? "N/A",
-                          },
-                          {
-                            key: "adj_pbt_to_e_lower_band",
-                            label: "Lower Band",
-                            render: (row) =>
-                              row.adj_pbt_to_e_lower_band?.toFixed(2) ?? "N/A",
-                          },
-                          {
-                            key: "adj_pbt_to_e_cov",
-                            label: "COV",
-                            render: (row) =>
-                              row.adj_pbt_to_e_cov?.toFixed(2) ?? "N/A",
-                          },
-                        ]}
-                      />
+                {!bollingerLoading && bollingerBand && (
+                  <>
+                    <div className="mt-6 w-max">
+                      <Label>Select Columns to Display</Label>
+                      <div className="flex flex-row items-center mt-1 gap-4 max-h-64 overflow-auto border rounded-md p-2">
+                        <Button
+                          variant="outline"
+                          onClick={handleSelectAll}
+                          className="text-sm hover:underline self-start"
+                        >
+                          {ALL_COLUMNS.filter(
+                            (col) => col.key !== "calculation_date"
+                          ).every((col) => visibleKeys.includes(col.key))
+                            ? "Deselect All"
+                            : "Select All"}
+                        </Button>
+                        {ALL_COLUMNS.filter(
+                          (col) => col.key !== "calculation_date"
+                        ).map((col) => (
+                          <label
+                            key={col.key}
+                            className="flex items-center space-x-2 cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={visibleKeys.includes(col.key)}
+                              onCheckedChange={() =>
+                                setVisibleKeys((prev) =>
+                                  prev.includes(col.key)
+                                    ? prev.filter((k) => k !== col.key)
+                                    : [...prev, col.key]
+                                )
+                              }
+                            />
+                            <span className="text-sm">{col.label}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+
+                    {/* Unified Table */}
+                    <div className="mt-4 w-xl">
+                      <h3 className="font-semibold mb-2">
+                        Bollinger Band Data
+                      </h3>
+                      <div className="overflow-auto">
+                        <CommonTable
+                          data={[bollingerBand]}
+                          columns={selectedColumns}
+                        />
+                      </div>
+                    </div>
+                  </>
                 )}
+
+                {/* bollinger ends */}
               </div>
               {/* End of right side of the modal */}
             </div>
