@@ -11,7 +11,6 @@ import { useLimits } from "@/hooks/useLimits";
 import { useConcalls } from "@/hooks/useConcalls";
 import { useBrokerage } from "@/hooks/useBrokerage";
 import { useVolatility } from "@/hooks/useVolatility";
-import { useBollingerBands } from "@/hooks/useBollingerBands";
 import { useMarketCap } from "@/hooks/useMarketCap";
 
 export default function FormScreen() {
@@ -40,7 +39,11 @@ export default function FormScreen() {
 
   const {marketCap, loading: marketCapLoading} = useMarketCap(selectedCo?.alpha_code)
 
-  const mCapValue = useMemo(() => marketCap?.market_cap, [marketCap]);
+  const mCapValue = useMemo(
+    () => marketCap?.[0]?.market_cap ?? null,
+    [marketCap]
+  ) as number;
+  
 
 const getFilteredDates = (dates: string[]) => {
   const today = new Date();

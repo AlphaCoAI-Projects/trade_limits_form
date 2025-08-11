@@ -13,7 +13,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const response = await fetch(
-      `https://screener-backend.alphaco.ai/get_mcap?alpha_code=${alpha_code}`
+      `https://screener-backend.alphaco.ai/get_mcap?alpha_codes=${alpha_code}`
+      // `http://127.0.0.1:8000/get_mcap?alpha_codes=${alpha_code}`
     )
     const result = await response.json()
 
